@@ -1,7 +1,7 @@
 TellMeWhenDB = {
 	["global"] = {
 		["TextLayouts"] = {
-			["bar2"] = {
+			["bar2"] = { 
 				{
 				}, -- [1]
 				{
