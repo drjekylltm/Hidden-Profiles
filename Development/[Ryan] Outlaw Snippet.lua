@@ -532,6 +532,7 @@ A[3] = function(icon)
 		and MultiUnits:GetByRange(15) >= 2--There is a target in 15 yards
 		and Player:ComboPointsDeficit() >= 4 --we have room for the CP
 		and Unit(player):CombatTime() > 0 --we are in combat 
+		and GetCurrentGCD() ~= 0  --limit searching for between GCDs, in high target counts can cause the rotation to get stuck swapping targets for too long
 		and Action.GetToggle(1, "AutoTarget") --Toggle is on
 		then  
 			for val in pairs(ActiveUnitPlates) do
@@ -699,6 +700,7 @@ A[3] = function(icon)
 		and MultiUnits:GetByRange(15) >= 2--There is a target in 15 yards
 		and Player:ComboPointsDeficit() >= 4 --we have room for the CP
 		and Unit(player):CombatTime() > 0 --we are in combat 
+		and GetCurrentGCD() ~= 0  --limit searching for between GCDs, in high target counts can cause the rotation to get stuck swapping targets for too long
 		and Action.GetToggle(1, "AutoTarget") --Toggle is on
 		then  
 			for val in pairs(ActiveUnitPlates) do
