@@ -79,7 +79,6 @@ Action[ACTION_CONST_ROGUE_OUTLAW] = {
     SerratedBoneSpike = Create({ Type = "Spell", ID = 328547}),
     EchoingReprimand = Create({ Type = "Spell", ID = 323547}),
     Flagellation = Create({ Type = "Spell", ID = 323654}),
-    ClaimFlagellation = Create({ Type = "Spell", ID = 346975,Hidden = true}),
     --PhialofSerenity = Create({ Type = "Spell", ID = 177278}),
 	SummonSteward = Create({ Type = "Spell", ID = 324739}), 
     --Conduits
@@ -193,6 +192,21 @@ local DefensiveCasts = {
 				[325877] = A.Feint, --Ember Blast, CN, Shade of Kael'thas					
 }
 
+
+
+function SpellCharges(SpellID)
+	-- @return number	
+	local charges, maxCharges, start, duration = GetSpellCharges(SpellID)
+	if charges == maxCharges then 
+		return maxCharges
+	end
+	return charges + ((TMW.time - start) / duration)  
+end
+
+
+
+
+
 -- [1] CC AntiFake Rotation
 local function AntiFakeStun(unitID) 
     return 
@@ -294,7 +308,8 @@ A[3] = function(icon)
     if Unit("target"):Name() == "Ashen Phylactery" then return end
 	
 	--Testing
---print(Unit(player):HasBuffs(A.MasterAssassinsMark.ID))
+	
+	
     -- Rotations 
     function EnemyRotation(unitID) 
         if not IsUnitEnemy(unitID) then return end
@@ -308,7 +323,7 @@ A[3] = function(icon)
         local isBurst = BurstIsON(unitID) -- @boolean
         
         --testing
-        
+
         --Stealth with target enemy
         if IsUnitEnemy(unitID) and A.Stealth:IsReady(unitID, true) and Player:GetStance() == 0 and not IsMounted() then --and Unit(player):HasBuffs(A.Soulshape.ID) == 0 apparently the wow API is shit and soulshape is also getstance == 2
             return A.Stealth:Show(icon)
@@ -677,7 +692,6 @@ A[3] = function(icon)
                 return A.AncestralCall:Show(icon)
             end 
 			
-			
             if (A.Flagellation:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Flagellation.ID, true) == 0 and (EightYardTTD > 4 or Unit(unitID):IsBoss())) then
                 return A.Flagellation:Show(icon)
             end
@@ -753,18 +767,39 @@ A[3] = function(icon)
 						end
 				end
 			end
-            -- Multiunits checks for the number of dots and allows using it if we will gain 3 or less CP, after +3 CP gained per use we can waste the extra generated. Highly unlikley that 3+ targets will live long enough to gain enough dots to generate >4 CP per use. 
-            if A.SerratedBoneSpike:IsReady(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.Stealth.ID) == 0 and  MultiUnits:GetByRangeAppliedDoTs(15, 2, A.SerratedBoneSpike.ID)+1 >= Player:ComboPointsDeficit() and ((Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 or (A.SerratedBoneSpike:GetSpellChargesFrac() >= 2.95) )) 
-			--or (A.SerratedBoneSpike:IsReady("mouseover") and  Unit("mouseover"):HealthPercent() < 100 and IsUnitEnemy("mouseover") and Unit("mouseover"):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0) 
-			then
+           
+
+		   -- Multiunits checks for the number of dots and allows using it if we will gain 3 or less CP, after +3 CP gained per use we can waste the extra generated. Highly unlikley that 3+ targets will live long enough to gain enough dots to generate >4 CP per use. 
+           if A.SerratedBoneSpike:IsReady(unitID) 
+		   and Unit(player):CombatTime() > 0 
+		   and Unit(player):HasBuffs(A.Stealth.ID) == 0 
+		   and MultiUnits:GetByRangeAppliedDoTs(15, 2, A.SerratedBoneSpike.ID)+1 >= Player:ComboPointsDeficit() -- have room for 3 CP
+
+		   then
+		   --Bonepsike target missing buff
+		    if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 then
                 return A.SerratedBoneSpike:Show(icon)
-            end
-		
+            end 
+
+				if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) == MultiUnits:GetByRange(15)then 			--all targets have bonespike
+					if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)>=3 then
+					return A.SerratedBoneSpike:Show(icon)
+					end
+					if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)==2 and SpellCharges(A.SerratedBoneSpike.ID) >= 0.9 then
+					return A.SerratedBoneSpike:Show(icon)
+					end
+					if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)==1 and SpellCharges(A.SerratedBoneSpike.ID) >= 1.9 then
+					return A.SerratedBoneSpike:Show(icon)
+					end
+				end
+			end
+			
+			
 			--Bone Spike Targeting
-					if A.SerratedBoneSpike:IsReady(unitID) 
+		if A.SerratedBoneSpike:IsReady(unitID) 
 		and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15) --There is a target in 15 yards without Bonespike Buff
 		and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0  and Action.GetToggle(1, "AutoTarget") -- if current target has dot and Autotarget is enabled
-		and  MultiUnits:GetByRangeAppliedDoTs(15, 2, A.SerratedBoneSpike.ID)+1 >= Player:ComboPointsDeficit() --we have room for the CP
+		and MultiUnits:GetByRangeAppliedDoTs(15, 2, A.SerratedBoneSpike.ID)+1 >= Player:ComboPointsDeficit() --we have room for the CP
 		and Unit(player):CombatTime() > 0 
 		then  
 			for val in pairs(ActiveUnitPlates) do
@@ -787,6 +822,9 @@ A[3] = function(icon)
 			end
 		end
 		
+		--use extra charges of bone spike on target once all targets in 15 yards have bone spike. 
+
+	
 		    if A.Sepsis:IsReady(unitID) and (EightYardTTD > 4 or Unit(unitID):IsBoss()) then
                 return A.Sepsis:Show(icon)
             end
@@ -805,7 +843,7 @@ A[3] = function(icon)
 				if (A.SliceAndDice:IsReady(unitID, true) and Unit(player):HasBuffs(A.SliceAndDice.ID) < (1 + (Player:ComboPoints()) * 1.8 ) and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) == 0 and Player:GetStance() <=1 ) then
 					return A.SliceAndDice:Show(icon)
 				end
-				if A.BetweenTheEyes:IsReady(unitID) then
+				if A.BetweenTheEyes:IsReady(unitID) and (Unit(unitID):TimeToDie() > 3 or Unit(unitID):IsBoss()) then
 					return A.BetweenTheEyes:Show(icon)
 				end
 				if A.Dispatch:IsReady(unitID) then
