@@ -86,6 +86,7 @@ Action[ACTION_CONST_ROGUE_OUTLAW] = {
 	--Legendary
 	Celerity = Create({ Type = "Spell", ID = 340087,Hidden = true}),
 	MarkoftheMasterAssassin = Create({ Type = "Spell", ID = 340076,Hidden = true}),
+	TinyToxicBlade = Create({ Type = "Spell", ID = 340078,Hidden = true}),	
     --rollthebonesbuff
     Broadside = Create({ Type = "Spell", ID = 193356}),
     BuriedTreasure = Create({ Type = "Spell", ID = 199600}),
@@ -308,8 +309,8 @@ A[3] = function(icon)
     if Unit("target"):Name() == "Ashen Phylactery" then return end
 	
 	--Testing
-	
-	
+	--print(MultiUnits:GetByRangeAppliedDoTs(15, 2, A.SerratedBoneSpike.ID))
+	--print(Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID))
     -- Rotations 
     function EnemyRotation(unitID) 
         if not IsUnitEnemy(unitID) then return end
@@ -673,6 +674,38 @@ A[3] = function(icon)
 					end
 			end
 
+
+		--MfD Snipping
+	if Player:GetDeBuffsUnitCount(A.BetweenTheEyes.ID) > 0 --something has between the eyes from us
+		and Unit(unitID):HasDeBuffs(A.BetweenTheEyes.ID, true) == 0 -- it's not our target
+		and not A.SerratedBoneSpike:IsReady(unitID) --we arent looking for a SBS target
+		and not A.MarkedForDeath:IsReady(unitID)	-- we arent looking for a MFD target
+		and Unit(player):CombatTime() > 0 --we are in combat 
+		and GetCurrentGCD() ~= 0  --limit searching for between GCDs, in high target counts can cause the rotation to get stuck swapping targets for too long
+		and Action.GetToggle(1, "AutoTarget") --Toggle is on
+		and Action.GetToggle(2, "REBTE") --Toggle is on
+		then  
+			for val in pairs(ActiveUnitPlates) do
+				if 	Unit(val):HasDeBuffs(A.BetweenTheEyes.ID, true) ~= 0 	-- if a nameplate has BTE buff	
+					and 
+					(
+						(
+						UnitCanAttack("player", val) 
+						and UnitThreatSituation("player", val) ~= nil -- player is on the threat table somewhere (in combat with), prevent breaking stealth if we vanish or abort attacking while buff is up
+						) 
+					or Unit(val):IsDummy() --not SL dummies :(
+					) 
+					then
+						return A:Show(icon, ACTION_CONST_AUTOTARGET)
+				end
+			end
+		end
+
+
+
+
+
+
             if A.Fireblood:IsReady(unitID, true) and A.Shiv:IsInRange(unitID) and Player:Energy() < 44 then
                 return A.Fireblood:Show(icon)
             end
@@ -752,7 +785,11 @@ A[3] = function(icon)
                 return A.KillingSpree:Show(icon)
             end
 
-            if A.BladeRush:IsReady(unitID) and Unit(player):HasBuffs(A.Stealth.ID) == 0 and Unit(unitID):Name() ~= "Spiteful Shade" and (MultiUnits:GetByRange(8) <= 1 or (MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0)) and ((GetToggle(2, "BladeRushRange") <= 6 and Unit(unitID):GetRange() <=5) or (GetToggle(2, "BladeRushRange") >= 6))then
+            if A.BladeRush:IsReady(unitID) and Unit(player):HasBuffs(A.Stealth.ID) == 0 and Unit(unitID):Name() ~= "Spiteful Shade" 
+			
+			and (MultiUnits:GetByRange(8) <= 1 or (MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0)) 
+			
+			and ((GetToggle(2, "BladeRushRange") <= 6 and Unit(unitID):GetRange() <=5) or (GetToggle(2, "BladeRushRange") >= 6))then
                 return A.BladeRush:Show(icon)
             end
 			
@@ -770,12 +807,15 @@ A[3] = function(icon)
            
 
 		   -- Multiunits checks for the number of dots and allows using it if we will gain 3 or less CP, after +3 CP gained per use we can waste the extra generated. Highly unlikley that 3+ targets will live long enough to gain enough dots to generate >4 CP per use. 
-           if A.SerratedBoneSpike:IsReady(unitID) 
-		   and Unit(player):CombatTime() > 0 
-		   and Unit(player):HasBuffs(A.Stealth.ID) == 0 
-		   and MultiUnits:GetByRangeAppliedDoTs(15, 2, A.SerratedBoneSpike.ID)+1 >= Player:ComboPointsDeficit() -- have room for 3 CP
-
-		   then
+            if A.SerratedBoneSpike:IsReady(unitID) 
+		    and Unit(player):CombatTime() > 0 
+		    and Unit(player):HasBuffs(A.Stealth.ID) == 0 
+		    and (Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 >=4 and Player:ComboPointsDeficit() >=4) or (Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 == Player:ComboPointsDeficit()) -- gain at least every CP until 4 then make sure we have room for 4 after that
+			
+			
+		    and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) --not SL dummies :( -- player is on the threat table somewhere (in combat with)
+			and ((MultiUnits:GetByRange(8) <= 1 and Unit(player):HasBuffs(A.Opportunity.ID) == 0) or (MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0)) -- blade flurry sync
+  		    then
 		   --Bonepsike target missing buff
 		    if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 then
                 return A.SerratedBoneSpike:Show(icon)
@@ -785,10 +825,10 @@ A[3] = function(icon)
 					if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)>=3 then
 					return A.SerratedBoneSpike:Show(icon)
 					end
-					if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)==2 and SpellCharges(A.SerratedBoneSpike.ID) >= 0.9 then
+					if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)==2 and SpellCharges(A.SerratedBoneSpike.ID) >= 1.9 then
 					return A.SerratedBoneSpike:Show(icon)
 					end
-					if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)==1 and SpellCharges(A.SerratedBoneSpike.ID) >= 1.9 then
+					if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)==1 and SpellCharges(A.SerratedBoneSpike.ID) >= 2.9 then
 					return A.SerratedBoneSpike:Show(icon)
 					end
 				end
@@ -799,8 +839,9 @@ A[3] = function(icon)
 		if A.SerratedBoneSpike:IsReady(unitID) 
 		and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15) --There is a target in 15 yards without Bonespike Buff
 		and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0  and Action.GetToggle(1, "AutoTarget") -- if current target has dot and Autotarget is enabled
-		and MultiUnits:GetByRangeAppliedDoTs(15, 2, A.SerratedBoneSpike.ID)+1 >= Player:ComboPointsDeficit() --we have room for the CP
+		and (Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 >=4 and Player:ComboPointsDeficit() >=4) or (Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 == Player:ComboPointsDeficit()) -- gain at least every CP until 4 then make sure we have room for 4 after that
 		and Unit(player):CombatTime() > 0 
+		and (MultiUnits:GetByRange(8) <= 1 or (MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0)) -- blade flurry sync
 		then  
 			for val in pairs(ActiveUnitPlates) do
 				if 	A.SerratedBoneSpike:IsReady(unitID) 
@@ -895,7 +936,11 @@ A[3] = function(icon)
             then
                 return A.MarkedForDeath:Show(icon)
             end
-            --Covenant Builders
+           
+
+
+
+		   --Covenant Builders
             --Use Spesis Stealth buff on Ambush, Pool energy for Ambush
             if Unit(player):HasBuffs(A.SepsisStealth.ID) ~= 0 and A.Ambush:IsInRange(unitID) and Player:ComboPointsDeficit() >= 1 then
                 if A.Ambush:IsReadyByPassCastGCD(unitID) then

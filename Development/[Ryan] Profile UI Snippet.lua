@@ -65,6 +65,13 @@ L.AOETT                                                = {
     enUS = "Enable BladeFlurry in rotation\n\nRight click: Create macro", 
     ruRU = "Включает ротацию для нескольких целей\n\nПравая кнопка мышки: Создать макрос", 
 }
+L.REBTE                                                = {
+    ANY = "Between the Eyes \nRe-target", 
+}
+L.REBTETT                                                = {
+    ANY = "Requires Auto Target\nRetarget Enemy with Between The Eyes Debuff\nMay Prevent Manual Targeting\n\nRight click: Create macro", 
+
+}
 L.OOCStealth                                                = {
     enUS = "Use\nOOC Stealth", 
     ruRU = "russian", 
@@ -536,6 +543,14 @@ A.Data.ProfileUI                                     = {
 					TT				={ 
                         ANY = "Number of Non-Boss units to use Adernanline Rush on\n\nRight click: Create macro",  
                     }, 
+                },
+			    {
+                    E                 = "Checkbox", 
+                    DB                 = "REBTE",
+                    DBV             = false,
+                    L                 = L.REBTE,
+                    TT                 = L.REBTETT,
+                    M                 = {},
                 },
 			},
 			
