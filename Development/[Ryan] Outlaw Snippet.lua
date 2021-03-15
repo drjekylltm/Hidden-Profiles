@@ -754,9 +754,12 @@ A[3] = function(icon)
 			end
            
             if A.SerratedBoneSpike:IsReady(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.Stealth.ID) == 0 
-		    and (((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 - boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1)) >= (3 + boolnumber(A.DeeperStratagem:IsTalentLearned())) 
-					and Player:ComboPointsDeficit() >= (3 + boolnumber(A.DeeperStratagem:IsTalentLearned()))) or (Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 - boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1) == Player:ComboPointsDeficit())) -- gain at least every CP until 3/4 then make sure we have room for 3/4 after that
-		    and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) --not SL dummies :( -- player is on the threat table somewhere (in combat with)
+			and 
+			((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1) <= Player:ComboPointsDeficit()) 
+			or 
+			((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1)) >= 3+boolnumber(A.DeeperStratagem:IsTalentLearned()) and Player:ComboPointsDeficit() >=3+boolnumber(A.DeeperStratagem:IsTalentLearned())))
+			
+			and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) --not SL dummies :( -- player is on the threat table somewhere (in combat with)
 			and ((MultiUnits:GetByRange(8) <= 1 and Unit(player):HasBuffs(A.Opportunity.ID) == 0) or (MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0)) -- blade flurry sync
   		    then
 		   --Bonepsike target missing buff
@@ -780,8 +783,11 @@ A[3] = function(icon)
 			
 			--Bone Spike Targeting
 		if A.SerratedBoneSpike:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 and Unit(player):CombatTime() > 0 and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15)
-		and (((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 - boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1)) >= (3 + boolnumber(A.DeeperStratagem:IsTalentLearned())) and Player:ComboPointsDeficit() >=(3 + boolnumber(A.DeeperStratagem:IsTalentLearned()))) or (Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 - boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1) == Player:ComboPointsDeficit())) -- gain at least every CP until 3/4 then make sure we have room for 3/4 after that
-		and (MultiUnits:GetByRange(8) <= 1 or (MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0)) -- blade flurry sync
+		and 
+		((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1) <= Player:ComboPointsDeficit()) 
+		or 
+		((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1)) >= 3+boolnumber(A.DeeperStratagem:IsTalentLearned()) and Player:ComboPointsDeficit() >=3+boolnumber(A.DeeperStratagem:IsTalentLearned())))
+		and ((MultiUnits:GetByRange(8) <= 1 and Unit(player):HasBuffs(A.Opportunity.ID) == 0) or (MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0)) -- blade flurry sync
 		then  
 			for val in pairs(ActiveUnitPlates) do
 				if 	(Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and Unit(val):TimeToDie() > 1 and MultiUnits:GetByRange(15) >= 2)				
@@ -791,7 +797,7 @@ A[3] = function(icon)
 				end
 			end
 		end
-		
+
 		    if A.Sepsis:IsReady(unitID) and (EightYardTTD > 4 or Unit(unitID):IsBoss()) then
                 return A.Sepsis:Show(icon)
             end
