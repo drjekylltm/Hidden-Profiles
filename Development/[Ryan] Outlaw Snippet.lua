@@ -314,7 +314,6 @@ A[3] = function(icon)
 	if Unit(player):HasBuffs(A.StolenShadehound.ID) ~= 0 then return end
 	if A.InstanceInfo.ID == 2286 and Unit("target"):Name() == "Farra" then return end -- if in Necrotic Wake instance and targetting Companion, stop rotation to allow for covenant Buff cast to finish stealth breaks cast
     if Unit("target"):Name() == "Ashen Phylactery" then return end
-	
 	--Testing
 
     -- Rotations 
@@ -701,7 +700,7 @@ A[3] = function(icon)
                 return A.AncestralCall:Show(icon)
             end 
 			
-            if (A.Flagellation:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Flagellation.ID, true) == 0 and (EightYardTTD > 4 or Unit(unitID):IsBoss())) then
+            if (A.Flagellation:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Flagellation.ID, true) == 0 and (EightYardTTD > 4 or Unit(unitID):IsBoss())) and (Player:ComboPointsDeficit() <= 0 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1) + boolnumber(Unit(player):HasBuffs(A.Opportunity.ID) >= 1 and A.QuickDraw:IsTalentLearned())) then
                 return A.Flagellation:Show(icon)
             end
 			
@@ -752,7 +751,7 @@ A[3] = function(icon)
 						end
 				end
 			end
-           
+           --SBS
             if A.SerratedBoneSpike:IsReady(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.Stealth.ID) == 0 
 			and 
 			((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1) <= Player:ComboPointsDeficit()) 
@@ -763,7 +762,7 @@ A[3] = function(icon)
 			and ((MultiUnits:GetByRange(8) <= 1 and Unit(player):HasBuffs(A.Opportunity.ID) == 0) or (MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0)) -- blade flurry sync
   		    then
 		   --Bonepsike target missing buff
-				if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 then
+				if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and not UnitCooldown:IsSpellInFly("player", A.SerratedBoneSpike.ID) then
 					return A.SerratedBoneSpike:Show(icon)
 				end 
 			--all targets have bonespike
