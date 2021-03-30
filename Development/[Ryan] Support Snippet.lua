@@ -105,9 +105,7 @@ Factory[4].RyanInterrupts = StdUi:tGenerateMinMax({
             [321807] = { useKick = false, useCC = true, useRacial = true    }, --Boneflay;             		CC
 		
             --Plaguefall
-            [328177] = { useKick = false, useCC = true, useRacial = true    }, --Fungistorm;                CC            
-            [330403] = { useKick = false, useCC = false, useRacial = false  }, --Wing Buffet;             	Block           
-            [318949] = { useKick = false, useCC = false, useRacial = false  }, --Festering Belch;           Block            
+            [328177] = { useKick = false, useCC = true, useRacial = true    }, --Fungistorm;                CC                                   
             [319070] = { useKick = true, useCC = false, useRacial = false   }, --Corrosive Gunk;            Kick            
             [336451] = { useKick = false, useCC = true, useRacial = true    }, --Bulwark of Maldraxxus;     CC            
             [328400] = { useKick = false, useCC = true, useRacial = true    }, --Stealthlings;             	CC 
@@ -116,8 +114,7 @@ Factory[4].RyanInterrupts = StdUi:tGenerateMinMax({
             [328429] = { useKick = false, useCC = true, useRacial = true    }, --Crushing Embrace;         	CC
             [328094] = { useKick = true, useCC = false, useRacial = false   }, --Pestilence Bolt;           Kick 	
             [329239] = { useKick = true, useCC = false, useRacial = false   }, --Creepy Crawlers;           Kick 
-            [321935] = { useKick = false, useCC = true, useRacial = true    }, --Withering Filth;          	CC 
-            [328475] = { useKick = false, useCC = false, useRacial = false  }, --Enveloping Webbing;        Block 
+            [321935] = { useKick = false, useCC = true, useRacial = true    }, --Withering Filth;          	CC  
 			
             --Sanguine Depths
             [319654] = { useKick = true, useCC = false, useRacial = false   }, --Hungering Drain;           Kick
