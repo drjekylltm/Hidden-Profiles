@@ -491,7 +491,7 @@ local function Interrupts()
 
         local function Defensives()
 		
-		if UnitThreatSituation("player", unitID) >= 1 and A.TricksOfTheTrade:IsReady("focus") then
+		if (UnitThreatSituation("player", unitID) or 0 >= 1 ) and A.TricksOfTheTrade:IsReady("focus") then
 			return A.TricksOfTheTrade:Show(icon)
 		end
 
