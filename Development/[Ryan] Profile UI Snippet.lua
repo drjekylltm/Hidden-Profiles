@@ -50,12 +50,20 @@ L.PVP                                                 = {
     ANY = "PvP",
 }
 L.MOUSEOVER                                            = {
-    enUS = "Use\n@mouseover", 
+    enUS = "Interrupt\n@mouseover", 
     ruRU = "Использовать\n@mouseover", 
 }
 L.MOUSEOVERTT                                        = {
-    enUS = "Will unlock use actions for @mouseover units\nExample: Resuscitate, Healing\n\nRight click: Create macro", 
+    enUS = "Will unlock use actions for @mouseover units\nExample: Kick, Kidney Shot\n\nRight click: Create macro", 
     ruRU = "Разблокирует использование действий для @mouseover юнитов\nНапример: Воскрешение, Хилинг\n\nПравая кнопка мышки: Создать макрос", 
+}
+L.target                                            = {
+    enUS = "Interrupt\n@target", 
+    ruRU = "Использовать\n@target", 
+}
+L.targettt                                        = {
+    enUS = "Will unlock use actions for @target units\nExample: Kick, Kidney Shot\n\nRight click: Create macro", 
+    ruRU = "Разблокирует использование действий для @target юнитов\nНапример: Воскрешение, Хилинг\n\nПравая кнопка мышки: Создать макрос", 
 }
 L.AOE                                                = {
     enUS = "Use\nAoE", 
@@ -66,7 +74,8 @@ L.AOETT                                                = {
     ruRU = "Включает ротацию для нескольких целей\n\nПравая кнопка мышки: Создать макрос", 
 }
 L.REBTE                                                = {
-    ANY = "Between the Eyes \nRe-target", 
+    enUS = "Between the Eyes\nRe-target", 
+	ruRU = "Промеж глаз\nцель",
 }
 L.REBTETT                                                = {
     ANY = "Requires Auto Target\nRetarget Enemy with Between The Eyes Debuff\nMay Prevent Manual Targeting\n\nRight click: Create macro", 
@@ -74,7 +83,7 @@ L.REBTETT                                                = {
 }
 L.OOCStealth                                                = {
     enUS = "Use\nOOC Stealth", 
-    ruRU = "russian", 
+    ruRU = "Скрытность", 
 }
 L.OOCStealthTT                                                = {
     enUS = "Enable OOC Stealth\n\nRight click: Create macro", 
@@ -86,22 +95,30 @@ L.CDS                                            = {
 }
 L.Totems                                            = {
     enUS = "Totems",
+	ruRU = "Тотемы",	
 }
 L.selfDefence                                            = {
     enUS = "Self Defence",
+	ruRU = "Самооборона",	
 }
 L.Poisons                                            = {
     enUS = "Poisons",
+	ruRU = "Яды",
+}
+L.Padding                                            = {
+    enUS = "",
+}
+L.Interrupting                                            = {
+    enUS = "Interrupting",
+    ruRU = "Прерывание",	
+}
+L.AutoTargeting                                            = {
+    enUS = "Auto Targeting",
+	ruRU = "Автоматический таргетинг",
 }
 L.Opener                                            = {
     enUS = "Opener",
-}
-L.stackManagement                                            = {
-    enUS = "stack Management",
-}
-L.ROTATION                                            = {
-    enUS = "Rotation",
-    ruRU = "Ротация",
+	ruRU = "Открывалка",
 }
 L.CATCHINVISIBLE                                    = {
     enUS = "Catch Invisible (arena)",
@@ -143,14 +160,6 @@ L.Echoing                                    = {
     enUS = S.Echoing .. "\nHold for " .. S.Vanish,
 }
 
-L.HealingTotem = {
-    enUS = S.HealingTotem .. "\nHealth Percent (Self)",
-    ruRU = S.HealingTotem .. "\nЗдоровье Процент (Свое)",
-}
-L.AstralShift = {
-    enUS = S.AstralShift .. "\nHealth Percent (Self)",
-    ruRU = S.AstralShift .. "\nЗдоровье Процент (Свое)",
-}
 L.TRINKETDEFENSIVE                                    = {
     enUS = "Protection Trinkets\nHealth Percent (Self)",
     ruRU = "Аксессуары Защиты\nЗдоровье Процент (Свое)",
@@ -175,7 +184,7 @@ local SliderMarginOptions = { margin = { top = 10 } }
 local LayoutConfigOptions = { gutter = 6, padding = { left = 5, right = 5 } }
 A.Data.ProfileEnabled[A.CurrentProfile]             = true
 A.Data.ProfileUI                                     = {    
-    DateTime = "v8.0 (30.3.2021) #Deathly",
+    DateTime = "v8.1 (16.4.2021) #MouseOver",
     [2] = {
         [ACTION_CONST_ROGUE_SUBTLETY] = {     
 
@@ -408,77 +417,7 @@ A.Data.ProfileUI                                     = {
         
         [ACTION_CONST_ROGUE_OUTLAW] = {             
             LayoutOptions = LayoutConfigOptions,
-            {
-                {
-                    E                 = "Checkbox", 
-                    DB                 = "mouseover",
-                    DBV             = true,
-                    L                 = L.MOUSEOVER, 
-                    TT                 = L.MOUSEOVERTT, 
-                    M                 = {},
-                },
-                {
-                    E                 = "Checkbox", 
-                    DB                 = "AoE",
-                    DBV             = true,
-                    L                 = L.AOE,
-                    TT                 = L.AOETT,
-                    M                 = {},
-                },
-                {
-                    E                 = "Checkbox", 
-                    DB                 = "OOCStealth",
-                    DBV             = true,
-                    L                 = L.OOCStealth,
-                    TT                 = L.OOCStealthTT,
-                    M                 = {},
-                },
-            },
-            {
-                {
-                    E                 = "Checkbox", 
-                    DB                 = "MOExplosive",
-                    DBV             = true,
-                    L = { 
-                        ANY = "Mouse Over\nTarget Explosives",
-                    }, 
-                    TT = { 
-                        ANY = "Use Mouse Over to Target Explosives\n\nRight click: Create macro",  
-                    }, 
-                    M                 = {},
-                },
-                {
-                    E                 = "Checkbox", 
-                    DB                 = "MOTotem",
-                    DBV             = true,
-                    L = { 
-                        ANY = "Mouse Over\nTarget Totems",
-                    }, 
-                    TT = { 
-                        ANY = "Use Mouse Over to Target Totems\n\nRight click: Create macro",  
-                    }, 
-                    M                 = {},
-                },
-				{
-                    E               = "Checkbox", 
-                    DB              = "InterruptList",
-                    DBV             = true,
-                    L = { 
-                        ANY = "Use Ryan's\nInterrupt List",
-                    }, 
-                    TT = { 
-                        ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",  
-                    }, 
-                    M                 = {},
-                },
-            },
-            --[[{ -- [2] Opener 
-                {
-                    E                 = "Header",
-                    L                 = L.Opener,
-                },
-            },--]]
-            {    
+             {    
                 {
                     E = "Dropdown",                                                         
                     OT = {
@@ -529,9 +468,25 @@ A.Data.ProfileUI                                     = {
                     }, 
                     M = {},
                 },				
-            },
+            },           
 			{
-                {                    
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "AoE",
+                    DBV             = true,
+                    L                 = L.AOE,
+                    TT                 = L.AOETT,
+                    M                 = {},
+                },
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "OOCStealth",
+                    DBV             = true,
+                    L                 = L.OOCStealth,
+                    TT                 = L.OOCStealthTT,
+                    M                 = {},
+                },
+				{                    
                     E                 = "Slider",                                                     
                     MIN             = 1, 
                     MAX                 = 10,                            
@@ -544,6 +499,83 @@ A.Data.ProfileUI                                     = {
                         ANY = "Number of Non-Boss units to use Adernanline Rush on\n\nRight click: Create macro",  
                     }, 
                 },
+            },
+           --[[ { -- Padding
+                {
+                    E                 = "Header",
+                    L                 = L.Padding,
+                },
+            },
+			--]]
+            { -- [2] Interrupting 
+                {
+                    E                 = "Header",
+                    L                 = L.Interrupting,
+                },
+            },			
+            {
+
+				{
+                    E               = "Checkbox", 
+                    DB              = "InterruptList",
+                    DBV             = true,
+                    L = { 
+                        ANY = "Use Ryan's\nInterrupt List",
+                    }, 
+                    TT = { 
+                        ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",  
+                    }, 
+                    M                 = {},
+                },
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "mouseover",
+                    DBV             = true,
+                    L                 = L.MOUSEOVER, 
+                    TT                 = L.MOUSEOVERTT, 
+                    M                 = {},
+                },
+				                {
+                    E                 = "Checkbox", 
+                    DB                 = "target",
+                    DBV             = true,
+                    L                 = L.target, 
+                    TT                 = L.targettt, 
+                    M                 = {},
+                },
+            },		
+            { -- [2] Auto Targetting 
+                {
+                    E                 = "Header",
+                    L                 = L.AutoTargeting,
+                },
+            },
+            {
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "MOExplosive",
+                    DBV             = true,
+                    L = { 
+                        ANY = "Mouse Over\nTarget Explosives",
+                    }, 
+                    TT = { 
+                        ANY = "Use Mouse Over to Target Explosives\n\nRight click: Create macro",  
+                    }, 
+                    M                 = {},
+                },
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "MOTotem",
+                    DBV             = true,
+                    L = { 
+                        ANY = "Mouse Over\nTarget Totems",
+                    }, 
+                    TT = { 
+                        ANY = "Use Mouse Over to Target Totems\n\nRight click: Create macro",  
+                    }, 
+                    M                 = {},
+                },
+
 			    {
                     E                 = "Checkbox", 
                     DB                 = "REBTE",
@@ -552,8 +584,19 @@ A.Data.ProfileUI                                     = {
                     TT                 = L.REBTETT,
                     M                 = {},
                 },
-			},
-			
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "ATInterrupt",
+                    DBV             = true,
+                    L = { 
+                        ANY = "Auto Target\nTo Interrupt",
+                    }, 
+                    TT = { 
+                        ANY = "Requires Auto Target\nSwap Targets to Interrupt\n\nRight click: Create macro",  
+                    }, 
+                    M                 = {},
+                },
+            },
             { -- [2] Poisons 
                 {
                     E                 = "Header",
@@ -596,8 +639,6 @@ A.Data.ProfileUI                                     = {
                     M = {},
                 },
             },            
-            
-            
             { -- [2] Self Defensives 
                 {
                     E                 = "Header",
