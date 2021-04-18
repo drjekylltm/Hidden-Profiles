@@ -184,7 +184,7 @@ local SliderMarginOptions = { margin = { top = 10 } }
 local LayoutConfigOptions = { gutter = 6, padding = { left = 5, right = 5 } }
 A.Data.ProfileEnabled[A.CurrentProfile]             = true
 A.Data.ProfileUI                                     = {    
-    DateTime = "v8.2 (16.4.2021) #MouseOver",
+    DateTime = "v9.0 (18.4.2021) #Sinning",
     [2] = {
         [ACTION_CONST_ROGUE_SUBTLETY] = {     
 
@@ -413,7 +413,241 @@ A.Data.ProfileUI                                     = {
         },
 
         
-        [ACTION_CONST_ROGUE_ASSASSINATION] = {             },
+        [ACTION_CONST_ROGUE_ASSASSINATION] = {             
+            LayoutOptions = LayoutConfigOptions,
+             {    
+                {
+                    E = "Dropdown",                                                         
+                    OT = {
+                        { text = "Manual Open", value = "OFF" },
+                        { text = A.GetSpellInfo(703), value = "Garrote" },
+                        { text = A.GetSpellInfo(1833), value = "CheapShot" },				
+                    },
+                    DB = "Opener",
+                    DBV = "Garrote",
+                    L = { 
+                        ANY = "Opener",
+                    }, 
+                    TT = { 
+                        ANY = "Select the opener to break stealth\nManual open will not break stealth\n\nRight click: Create macro",  
+                    }, 
+                    M = {},
+                },  
+                {
+                    E = "Dropdown",                                                         
+                    OT = {
+                        { text = "Auto", value = 2 },
+                        { text = "Manual", value = 1 },
+                        { text = "Off", value = 0 },
+                    },
+                    DB = "VanishSetting",
+                    DBV = 0,
+                    L = { 
+                        ANY = "Vanish Usage",
+                    }, 
+                    TT = { 
+                        ANY = "Auto: Vanish + Attack \nManual: Attack After Manual Vanish\nStop: Stop Rotation After Vanish\n\nRight click: Create macro",  
+                    }, 
+                    M = {},
+                },				
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "AoE",
+                    DBV             = true,
+                    L                 = L.AOE,
+                    TT                 = L.AOETT,
+                    M                 = {},
+                },
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "OOCStealth",
+                    DBV             = true,
+                    L                 = L.OOCStealth,
+                    TT                 = L.OOCStealthTT,
+                    M                 = {},
+                },
+		    },
+           --[[ { -- Padding
+                {
+                    E                 = "Header",
+                    L                 = L.Padding,
+                },
+            },
+			--]]
+            { -- [2] Interrupting 
+                {
+                    E                 = "Header",
+                    L                 = L.Interrupting,
+                },
+            },			
+            {
+
+				{
+                    E               = "Checkbox", 
+                    DB              = "InterruptList",
+                    DBV             = true,
+                    L = { 
+                        ANY = "Use Ryan's\nInterrupt List",
+                    }, 
+                    TT = { 
+                        ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",  
+                    }, 
+                    M                 = {},
+                },
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "mouseover",
+                    DBV             = true,
+                    L                 = L.MOUSEOVER, 
+                    TT                 = L.MOUSEOVERTT, 
+                    M                 = {},
+                },
+				                {
+                    E                 = "Checkbox", 
+                    DB                 = "target",
+                    DBV             = true,
+                    L                 = L.target, 
+                    TT                 = L.targettt, 
+                    M                 = {},
+                },
+            },		
+            { -- [2] Auto Targetting 
+                {
+                    E                 = "Header",
+                    L                 = L.AutoTargeting,
+                },
+            },
+            {
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "MOExplosive",
+                    DBV             = true,
+                    L = { 
+                        ANY = "Mouse Over\nTarget Explosives",
+                    }, 
+                    TT = { 
+                        ANY = "Use Mouse Over to Target Explosives\n\nRight click: Create macro",  
+                    }, 
+                    M                 = {},
+                },
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "MOTotem",
+                    DBV             = true,
+                    L = { 
+                        ANY = "Mouse Over\nTarget Totems",
+                    }, 
+                    TT = { 
+                        ANY = "Use Mouse Over to Target Totems\n\nRight click: Create macro",  
+                    }, 
+                    M                 = {},
+                },
+                {
+                    E                 = "Checkbox", 
+                    DB                 = "ATInterrupt",
+                    DBV             = true,
+                    L = { 
+                        ANY = "Auto Target\nTo Interrupt",
+                    }, 
+                    TT = { 
+                        ANY = "Requires Auto Target\nSwap Targets to Interrupt\n\nRight click: Create macro",  
+                    }, 
+                    M                 = {},
+                },
+            },
+            { -- [2] Poisons 
+                {
+                    E                 = "Header",
+                    L                 = L.Poisons,
+                },
+            },
+            {    
+                {
+                    E = "Dropdown",                                                         
+                    OT = {
+                        { text = "OFF", value = "OFF" },
+                        { text = A.GetSpellInfo(2823), value = "DeadlyPoison" },
+                        { text = A.GetSpellInfo(8679), value = "WoundPoison" },
+                    },
+                    DB = "LethalPoison",
+                    DBV = "DeadlyPoison",
+                    L = { 
+                        ANY = "Lethal Poison",
+                    }, 
+                    TT = { 
+                        ANY = "Select the lethal poison the rotation should always maintain\n\nRight click: Create macro",  
+                    }, 
+                    M = {},
+                },            
+                {
+                    E = "Dropdown",                                                         
+                    OT = {
+                        { text = "OFF", value = "OFF" },
+                        { text = A.GetSpellInfo(5761), value = "NumbingPoison" },
+                        { text = A.GetSpellInfo(3408), value = "CripplingPoison" },
+                    },
+                    DB = "NonLethalPoison",
+                    DBV = "NumbingPoison",
+                    L = { 
+                        ANY = "Non-Lethal Poison",
+                    }, 
+                    TT = { 
+                        ANY = "Select the non-lethal poison the rotation should always maintain\n\nRight click: Create macro",  
+                    }, 
+                    M = {},
+                },
+            },            
+            { -- [2] Self Defensives 
+                {
+                    E                 = "Header",
+                    L                 = L.selfDefence,
+                },
+            },
+            {
+                {                    
+                    E                 = "Slider",                                                     
+                    MIN             = -1, 
+                    MAX                 = 100,                            
+                    DB                 = "Feint",
+                    DBV             = 100,
+                    ONOFF             = true,
+                    L                 = L.FEINT,
+                    M                 = {},
+                },
+                {
+                    E                = "Slider",                                                     
+                    MIN             = -1, 
+                    MAX                = 100,                            
+                    DB                 = "CrimsonVial",
+                    DBV             = 60,
+                    ONOFF             = true,
+                    L                 = L.CrimsonVial,                
+                    M                 = {},
+                },
+            },
+            {    
+                {
+                    E                 = "Slider",                                                     
+                    MIN             = -1, 
+                    MAX             = 100,                            
+                    DB                 = "Evasion",
+                    DBV             = 100,
+                    ONOFF             = true,
+                    L                 = L.EVASION,
+                    M                 = {},
+                },
+                {
+                    E                 = "Slider",                                                     
+                    MIN                = -1, 
+                    MAX                = 100,                            
+                    DB                 = "CloakofShadows",
+                    DBV                = 100,
+                    ONOFF             = true,
+                    L                 = L.CLOAKOFSHADOWS,
+                    M                 = {},
+                },
+            },
+        },
         
         [ACTION_CONST_ROGUE_OUTLAW] = {             
             LayoutOptions = LayoutConfigOptions,
