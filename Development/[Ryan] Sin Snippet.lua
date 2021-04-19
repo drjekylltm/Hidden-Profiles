@@ -513,7 +513,7 @@ local function Interrupts()
         
         local function Opener()
             if A.MarkedForDeath:IsReady(unitID) 
-            and ((not GetToggle(1, "BossMods") and A.PistolShot:IsInRange(unitID)) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 7)) and not Unit(unitID):IsTotem() 
+            and ((not GetToggle(1, "BossMods") and IsItemInRange(10645, unitID)) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 7)) and not Unit(unitID):IsTotem() 
             then
                 return A.MarkedForDeath:Show(icon)
             end
@@ -546,8 +546,7 @@ local function Interrupts()
         end
         
         local function StealthCDs()
- 
-			--MfD Snipping
+ 			--MfD Snipping
 			if A.MarkedForDeath:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and MFDSnipe() then
 				return true
 			end			
@@ -556,17 +555,20 @@ local function Interrupts()
                 return A.MarkedForDeath:Show(icon)
             end
 			--reopen based on talent
+			
             if GetToggle(2, "VanishSetting") >=1 then
 				--With  Subterfuge, use it when  Garrote is ready with enough space for incoming combo points (i.e. pay attention to having only 0-1 combo points if you are going to apply it to multiple targets). This should be done during  Vendetta, during the last 5.4 seconds of the DoT if you have an empowered one up from the opener, otherwise without regard to the remaining time on your active  Garrote.
 				if A.Subterfuge:IsTalentLearned() and A.Garrote:IsReady(unitID) and Player:GetDeBuffsUnitCount(A.Vendetta.ID) ~= 0 and Player:ComboPointsDeficit() >= 1 then
-					return A.Garrote.Show(icon)
+					return A.Garrote:Show(icon)
 				end
 				--With  Nightstalker, use it at maximum combo points in order to apply an empowered  Rupture. Make sure  Exsanguinate is ready if talented. Against 3 or more targets, snapshot  Crimson Tempest instead (if talented).
 				if A.Nightstalker:IsTalentLearned() and Player:ComboPointsDeficit() == 0 and ((A.Exsanguinate:IsReady(unitID)) or (not A.Exsanguinate:IsSpellLearned())) then 
 					if (MultiUnits:GetByRange(8) >= 3 and A.CrimsonTempest:IsTalentLearned() and A.CrimsonTempest:IsReady(unitID))  then
 						return A.CrimsonTempest:Show(icon)	
-					else 
+					elseif A.Exsanguinate:IsReady(unitID) then
 						return A.Exsanguinate:Show(icon)
+					elseif A.Rupture:IsReady() then
+						return A.Rupture:Show(icon)
 					end				
 				end
 				--With  Master Assassin, use it with  Vendetta if you are not going to have to refresh your bleeds during the  Master Assassin buff.				
@@ -657,7 +659,7 @@ local function Interrupts()
 				--todo garrote snapshot	
 				--todo multiple garrote checks
 				if A.Subterfuge:IsTalentLearned() and A.Garrote:IsReady(unitID) and Player:GetDeBuffsUnitCount(A.Vendetta.ID) ~= 0 and Player:ComboPointsDeficit() >= 1 then
-					return A.Vanish.Show(icon)
+					return A.Vanish:Show(icon)
 				end
 				
 				--With  Nightstalker, use it at maximum combo points in order to apply an empowered  Rupture. Make sure  Exsanguinate is ready if talented. Against 3 or more targets, snapshot  Crimson Tempest instead (if talented).
@@ -824,9 +826,11 @@ local function Interrupts()
             return true
         end
         --StealthCDs
-        if StealthCDs() and isBurst 
+        if isBurst  
+
         --TODO: review "or" here : the intent is for vanish to allow for in combat stealth CDs (RtB, MfD, and Ambush) but if vanish lasts so long you gain the stealth buff, we will just reopen instead which will also use stealth abilities based on user Opener Settings
-        and (Player:GetStance() == 2 or (LastPlayerCastID == 1856 and Player:GetStance() ~= 1)) then
+        and (Player:GetStance() == 2 or (LastPlayerCastID == A.Vanish.ID and Player:GetStance() ~= 1)) 
+				and StealthCDs() then
             return true 
         end
         if Unit(player):HasBuffs(A.Stealth.ID) == 0 then
