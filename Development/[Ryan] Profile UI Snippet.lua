@@ -184,7 +184,7 @@ local SliderMarginOptions = { margin = { top = 10 } }
 local LayoutConfigOptions = { gutter = 6, padding = { left = 5, right = 5 } }
 A.Data.ProfileEnabled[A.CurrentProfile]             = true
 A.Data.ProfileUI                                     = {    
-    DateTime = "v9.1 (19.4.2021) #Sinning",
+    DateTime = "v9.2 (21.4.2021) #Sinning",
     [2] = {
         [ACTION_CONST_ROGUE_SUBTLETY] = {     
 
@@ -450,7 +450,10 @@ A.Data.ProfileUI                                     = {
                     }, 
                     M = {},
                 },				
-                {
+
+		    },
+			{
+			                {
                     E                 = "Checkbox", 
                     DB                 = "AoE",
                     DBV             = true,
@@ -466,22 +469,6 @@ A.Data.ProfileUI                                     = {
                     TT                 = L.OOCStealthTT,
                     M                 = {},
                 },
-		    },
-           --[[ { -- Padding
-                {
-                    E                 = "Header",
-                    L                 = L.Padding,
-                },
-            },
-			--]]
-            { -- [2] Interrupting 
-                {
-                    E                 = "Header",
-                    L                 = L.Interrupting,
-                },
-            },			
-            {
-
 				{
                     E               = "Checkbox", 
                     DB              = "InterruptList",
@@ -494,23 +481,7 @@ A.Data.ProfileUI                                     = {
                     }, 
                     M                 = {},
                 },
-                {
-                    E                 = "Checkbox", 
-                    DB                 = "mouseover",
-                    DBV             = true,
-                    L                 = L.MOUSEOVER, 
-                    TT                 = L.MOUSEOVERTT, 
-                    M                 = {},
-                },
-				                {
-                    E                 = "Checkbox", 
-                    DB                 = "target",
-                    DBV             = true,
-                    L                 = L.target, 
-                    TT                 = L.targettt, 
-                    M                 = {},
-                },
-            },		
+			},
             { -- [2] Auto Targetting 
                 {
                     E                 = "Header",
@@ -704,7 +675,19 @@ A.Data.ProfileUI                                     = {
                 },				
             },           
 			{
-                {
+				{
+                    E               = "Checkbox", 
+                    DB              = "InterruptList",
+                    DBV             = true,
+                    L = { 
+                        ANY = "Use Ryan's\nInterrupt List",
+                    }, 
+                    TT = { 
+                        ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",  
+                    }, 
+                    M                 = {},
+                },                
+				{
                     E                 = "Checkbox", 
                     DB                 = "AoE",
                     DBV             = true,
@@ -741,43 +724,6 @@ A.Data.ProfileUI                                     = {
                 },
             },
 			--]]
-            { -- [2] Interrupting 
-                {
-                    E                 = "Header",
-                    L                 = L.Interrupting,
-                },
-            },			
-            {
-
-				{
-                    E               = "Checkbox", 
-                    DB              = "InterruptList",
-                    DBV             = true,
-                    L = { 
-                        ANY = "Use Ryan's\nInterrupt List",
-                    }, 
-                    TT = { 
-                        ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",  
-                    }, 
-                    M                 = {},
-                },
-                {
-                    E                 = "Checkbox", 
-                    DB                 = "mouseover",
-                    DBV             = true,
-                    L                 = L.MOUSEOVER, 
-                    TT                 = L.MOUSEOVERTT, 
-                    M                 = {},
-                },
-				                {
-                    E                 = "Checkbox", 
-                    DB                 = "target",
-                    DBV             = true,
-                    L                 = L.target, 
-                    TT                 = L.targettt, 
-                    M                 = {},
-                },
-            },		
             { -- [2] Auto Targetting 
                 {
                     E                 = "Header",
@@ -809,7 +755,6 @@ A.Data.ProfileUI                                     = {
                     }, 
                     M                 = {},
                 },
-
 			    {
                     E                 = "Checkbox", 
                     DB                 = "REBTE",

@@ -376,9 +376,9 @@ A[3] = function(icon)
 	
 local function Interrupts()
 	    local unitIDinterrupt = "none"
-			if IsUnitEnemy("mouseover") and A.GetToggle(2, "mouseover") then 
+			if IsUnitEnemy("mouseover") then 
 				unitIDinterrupt = "mouseover"
-			elseif IsUnitEnemy("target") and A.GetToggle(2, "target")then 
+			elseif IsUnitEnemy("target") then 
 				unitIDinterrupt = "target"
 			end 
 			
@@ -622,6 +622,18 @@ local function Interrupts()
 					return A.SerratedBoneSpike:Show(icon)
 					end
 				end
+			-- not all targets have SBS and Auto target is off	
+				if (Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) <= MultiUnits:GetByRange(15)) and not Action.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 then
+						if Unit(unitID):TimeToDie() > 90 or IsInRaid() then  --bonespike on CD if fight is longer than a minute and a half
+							return A.SerratedBoneSpike:Show(icon)
+						end
+						if Unit(unitID):TimeToDie() > 60  and SpellCharges(A.SerratedBoneSpike.ID) > 1 then -- at 60 seconds TTD, save 1 charge
+							return A.SerratedBoneSpike:Show(icon)
+						end
+						if Unit(unitID):TimeToDie() > 30  and SpellCharges(A.SerratedBoneSpike.ID) > 2 then -- at 30 seconds TTD, save 2 charge
+							return A.SerratedBoneSpike:Show(icon)
+						end						
+				end 	
 			end
 			
 			--Bone Spike Targeting

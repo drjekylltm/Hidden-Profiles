@@ -428,9 +428,9 @@ A[3] = function(icon)
 		
 local function Interrupts()
 	    local unitIDinterrupt = "none"
-			if IsUnitEnemy("mouseover") and A.GetToggle(2, "mouseover") then 
+			if IsUnitEnemy("mouseover") then 
 				unitIDinterrupt = "mouseover"
-			elseif IsUnitEnemy("target") and A.GetToggle(2, "target")then 
+			elseif IsUnitEnemy("target") then 
 				unitIDinterrupt = "target"
 			end 
 			
@@ -642,7 +642,6 @@ local function Interrupts()
             end
         end
 
-
 		local function MasterAss()
 		
 		--[[
@@ -820,15 +819,15 @@ local function Interrupts()
 						end
 				end
 			end
+
 		   --SBS
             if A.SerratedBoneSpike:IsReady(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.Stealth.ID) == 0 
 			and 
 			((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1) <= Player:ComboPointsDeficit()) 
 			or 
 			((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1)) >= 3+boolnumber(A.DeeperStratagem:IsTalentLearned()) and Player:ComboPointsDeficit() >=3+boolnumber(A.DeeperStratagem:IsTalentLearned())))
-			
 			and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) --not SL dummies :( -- player is on the threat table somewhere (in combat with)
-			and ((MultiUnits:GetByRange(8) <= 1 and Unit(player):HasBuffs(A.Opportunity.ID) == 0) or (MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0)) -- blade flurry sync
+			and ((MultiUnits:GetByRange(8) <= 1 and (Unit(player):HasBuffs(A.Opportunity.ID) == 0 or Unit(player):HasBuffs(A.SkullandCrossbones.ID) == 0 or SpellCharges(A.SerratedBoneSpike.ID) >= 2.85)) or (MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0)) -- blade flurry sync
   		    then
 		   --Bonepsike target missing buff
 				if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and not UnitCooldown:IsSpellInFly("player", A.SerratedBoneSpike.ID) then
@@ -854,7 +853,21 @@ local function Interrupts()
 						end						
 					end
 				end
-			end
+			-- not all targets have SBS and Auto target is off	
+				if (Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) <= MultiUnits:GetByRange(15)) and not Action.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 then
+						if Unit(unitID):TimeToDie() > 90 or IsInRaid() then  --bonespike on CD if fight is longer than a minute and a half
+							return A.SerratedBoneSpike:Show(icon)
+						end
+						if Unit(unitID):TimeToDie() > 60  and SpellCharges(A.SerratedBoneSpike.ID) > 1 then -- at 60 seconds TTD, save 1 charge
+							return A.SerratedBoneSpike:Show(icon)
+						end
+						if Unit(unitID):TimeToDie() > 30  and SpellCharges(A.SerratedBoneSpike.ID) > 2 then -- at 30 seconds TTD, save 2 charge
+							return A.SerratedBoneSpike:Show(icon)
+						end						
+				end 
+			end			
+			
+			
 			--Bone Spike Targeting
 		if A.SerratedBoneSpike:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 and Unit(player):CombatTime() > 0 and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15)
 		and not CastingCheck(unitID) and 
