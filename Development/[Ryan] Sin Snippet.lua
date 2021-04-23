@@ -573,12 +573,9 @@ local function Interrupts()
 				end
 				--With  Master Assassin, use it with  Vendetta if you are not going to have to refresh your bleeds during the  Master Assassin buff.				
 				if A.MasterAssassin:IsTalentLearned() and Unit(unitID):HasDeBuffs(A.Rupture.ID, true) > 3 and Unit(unitID):HasDeBuffs(A.Garrote.ID, true) > 3 then 
-					return A.Garrote:Show(icon)
+					return A.Mutilate:Show(icon)
 				end				
 			end 
-        
-		
-		
 		end
 
         local function CDs()
@@ -589,7 +586,12 @@ local function Interrupts()
             end
 			
 			
-			if (A.Flagellation:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Flagellation.ID, true) == 0 and (EightYardTTD > 4 or Unit(unitID):IsBoss())) then
+			-- apply inital SnD 
+			if A.SliceAndDice:IsReady(unitID, true) and Unit(player):HasBuffs(A.SliceAndDice.ID) < 3 and Unit(player):CombatTime() <= 10 then
+				return A.SliceAndDice:Show(icon)			
+			end
+			if (A.Flagellation:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Flagellation.ID, true) == 0 and A.Vanish:GetCooldown() <= 2 and (EightYardTTD > 4 or Unit(unitID):IsBoss())) and (Player:ComboPointsDeficit() <= 1 or Player:ComboPoints() == Unit(player):HasBuffsStacks(A.EchoingReprimandBuff.ID)) 
+			then
                 return A.Flagellation:Show(icon)
             end
 		    if A.Sepsis:IsReady(unitID) and (EightYardTTD > 4 or Unit(unitID):IsBoss()) then
@@ -661,12 +663,17 @@ local function Interrupts()
                 return A.MarkedForDeath:Show(icon)
             end
 			--todo improve opener logic, a hard timer sucks probably
-			if A.Vendetta:IsReady(unitID) and Unit(unitID):TimeToDie() > 10 and ((A.Vanish:GetCooldown() <= 1 and GetToggle(2, "VanishSetting") == 2) or (GetToggle(2, "VanishSetting") ~= 2)) and Unit(player):CombatTime() >= 3 and Player:Energy() > 44 then
+			if A.Vendetta:IsReady(unitID) and Unit(unitID):TimeToDie() > 10 and ((A.Vanish:GetCooldown() <= 1 and GetToggle(2, "VanishSetting") == 2) or (GetToggle(2, "VanishSetting") ~= 2)) and Unit(player):CombatTime() >= 4 and Player:Energy() > 44 
+			and ((not A.Flagellation:IsSpellLearned()) or (A.Flagellation:GetCooldown() ~= 0))
+			then
 				return A.Vendetta:Show(icon)
 			end
 			
 			-- Use Vanish if setting is set to Auto 
-			if A.Vanish:IsReady(player) and GetToggle(2, "VanishSetting") == 2 and A.Shiv:IsInRange(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) == 0 then			
+			if A.Vanish:IsReady(player) and GetToggle(2, "VanishSetting") == 2 and A.Shiv:IsInRange(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) == 0 
+			
+
+			then			
 				--With  Subterfuge, use it when  Garrote is ready with enough space for incoming combo points (i.e. pay attention to having only 0-1 combo points if you are going to apply it to multiple targets). This should be done during  Vendetta, during the last 5.4 seconds of the DoT if you have an empowered one up from the opener, otherwise without regard to the remaining time on your active  Garrote.
 				--todo garrote snapshot	
 				--todo multiple garrote checks
