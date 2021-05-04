@@ -363,10 +363,12 @@ A[3] = function(icon)
         end 
 		
 	local function MFDSnipe()
+			
 			if MultiUnits:GetByRange(15) >= 2 and Player:ComboPointsDeficit() >= 4 and Unit("player"):CombatTime() > 0 and GetCurrentGCD() ~= 0 then  
 				for val in pairs(ActiveUnitPlates) do
 					if 	A.MarkedForDeath:IsReady(unitID) and Unit(val):TimeToDie() < Unit(unitID):TimeToDie() and 
 						((UnitCanAttack("player", val) and Unit(val):GetRange() <=15 and UnitThreatSituation("player", val) ~= nil and not Unit(val):IsTotem())	or Unit(val):IsDummy()) then
+						
 							return A:Show(icon, ACTION_CONST_AUTOTARGET)
 					end
 				end
@@ -396,9 +398,6 @@ local function Interrupts()
                 if not useKick or notKickAble or A.Kick:GetCooldown() > 0 and Unit(unitIDinterrupt):HasBuffs(A.Inspired.ID) == 0 then 
                     if useCC and (Player:GetStance() ~= 0) and A.CheapShot:IsReady(unitIDinterrupt) and A.CheapShot:AbsentImun(unitIDinterrupt, Temp.TotalAndPhysAndCC) and Unit(unitIDinterrupt):GetDR("stun") > 0 and not Unit(unitIDinterrupt):IsBoss() and Unit(unitIDinterrupt):HasBuffs(A.Sanguine.ID) == 0 then 
                         return A.CheapShot:Show(icon) 
-                    end 
-                    if useCC and A.Gouge:IsReady(unitIDinterrupt) and A.Gouge:AbsentImun(unitIDinterrupt, Temp.TotalAndPhysAndCC) and Player:IsBehind(.3) and Unit(unitIDinterrupt):GetDR("incapacitate") > 0 and not Unit(unitIDinterrupt):IsBoss() then 
-                        return A.Gouge:Show(icon) 
                     end 
                     if useCC and A.KidneyShot:IsReady(unitIDinterrupt) and A.KidneyShot:AbsentImun(unitIDinterrupt, Temp.TotalAndPhysAndCC) and Player:ComboPoints() >= 1 and Unit(unitIDinterrupt):GetDR("stun") > 0 and not Unit(unitIDinterrupt):IsBoss() and Unit(unitIDinterrupt):HasBuffs(A.Sanguine.ID) == 0 then 
                         return A.KidneyShot:Show(icon) 
@@ -431,7 +430,9 @@ local function Interrupts()
                     or (useRacial and A.QuakingPalm:IsReady(val) and A.QuakingPalm:AbsentImun(val, Temp.TotalAndPhysAndCC) and Unit(val):GetDR("incapacitate") > 0 and not Unit(val):IsBoss()) 
                     or (useCC and A.Blind:IsReady(val) and A.Blind:AbsentImun(val, Temp.TotalAndPhysAndCC) and Unit(val):GetDR("disorient") > 0 and not Unit(val):IsBoss()))
 					then
-							return A:Show(icon, ACTION_CONST_AUTOTARGET)
+							return
+							
+							A:Show(icon, ACTION_CONST_AUTOTARGET)
 					end
 				end
 			end
@@ -590,8 +591,7 @@ local function Interrupts()
 			if A.SliceAndDice:IsReady(unitID, true) and Unit(player):HasBuffs(A.SliceAndDice.ID) < 3 and Unit(player):CombatTime() <= 10 then
 				return A.SliceAndDice:Show(icon)			
 			end
-			if (A.Flagellation:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Flagellation.ID, true) == 0 and A.Vanish:GetCooldown() <= 2 and (EightYardTTD > 4 or Unit(unitID):IsBoss())) and (Player:ComboPointsDeficit() <= 1 or Player:ComboPoints() == Unit(player):HasBuffsStacks(A.EchoingReprimandBuff.ID)) 
-			then
+			if (A.Flagellation:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Flagellation.ID, true) == 0 and A.Vanish:GetCooldown() <= 2 and (EightYardTTD > 4 or Unit(unitID):IsBoss())) and Player:ComboPointsDeficit() <= 1 then
                 return A.Flagellation:Show(icon)
             end
 		    if A.Sepsis:IsReady(unitID) and (EightYardTTD > 4 or Unit(unitID):IsBoss()) then
@@ -625,7 +625,7 @@ local function Interrupts()
 					end
 				end
 			-- not all targets have SBS and Auto target is off	
-				if (Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) <= MultiUnits:GetByRange(15)) and not Action.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 then
+				if (Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) <= MultiUnits:GetByRange(15)) and not A.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 then
 						if Unit(unitID):TimeToDie() > 90 or IsInRaid() then  --bonespike on CD if fight is longer than a minute and a half
 							return A.SerratedBoneSpike:Show(icon)
 						end
@@ -639,17 +639,18 @@ local function Interrupts()
 			end
 			
 			--Bone Spike Targeting
-		if A.SerratedBoneSpike:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 and Unit(player):CombatTime() > 0 
+		if A.SerratedBoneSpike:IsReady(unitID) and A.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 and Unit(player):CombatTime() > 0 
 		and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15)
 		and 
-		((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 ) <= Player:ComboPointsDeficit()) 
+		(((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 ) <= Player:ComboPointsDeficit()) 
 		or 
-		((((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 )) >= 3+boolnumber(A.DeeperStratagem:IsTalentLearned()) and Player:ComboPointsDeficit() >=3+boolnumber(A.DeeperStratagem:IsTalentLearned())))
+		((((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 )) >= 3+boolnumber(A.DeeperStratagem:IsTalentLearned()) and Player:ComboPointsDeficit() >=3+boolnumber(A.DeeperStratagem:IsTalentLearned()))))
 		then  
 			for val in pairs(ActiveUnitPlates) do
 				if 	(Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and Unit(val):TimeToDie() > 1 and MultiUnits:GetByRange(15) >= 2)				
 					and 
 					(( UnitCanAttack("player", val) and Unit(val):GetRange() <=15  and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) then
+			
 						return A:Show(icon, ACTION_CONST_AUTOTARGET)
 				end
 			end
@@ -663,7 +664,7 @@ local function Interrupts()
                 return A.MarkedForDeath:Show(icon)
             end
 			--todo improve opener logic, a hard timer sucks probably
-			if A.Vendetta:IsReady(unitID) and Unit(unitID):TimeToDie() > 10 and ((A.Vanish:GetCooldown() <= 1 and GetToggle(2, "VanishSetting") == 2) or (GetToggle(2, "VanishSetting") ~= 2)) and Unit(player):CombatTime() >= 4 and Player:Energy() > 44 
+			if A.Vendetta:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Vendetta.ID) == 0 and Unit(unitID):TimeToDie() > 10 and ((A.Vanish:GetCooldown() <= 1 and GetToggle(2, "VanishSetting") == 2) or (GetToggle(2, "VanishSetting") ~= 2)) and Unit(unitID):HasDeBuffs(A.Rupture.ID, true) ~= 0 and Player:Energy() > 44 
 			and ((not A.Flagellation:IsSpellLearned()) or (A.Flagellation:GetCooldown() ~= 0))
 			then
 				return A.Vendetta:Show(icon)
@@ -739,8 +740,11 @@ local function Interrupts()
 				return A.Rupture:Show(icon)
 			end
 			--Keep up  Crimson Tempest (if talented) against 2 or more targets with four or more combo points. Refresh it only during the last 2s.
-			if  (Player:ComboPointsDeficit() <= 1 or Player:ComboPoints() == Unit(player):HasBuffsStacks(A.EchoingReprimandBuff.ID)) and A.CrimsonTempest:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.CrimsonTempest.ID) <= 2 and MultiUnits:GetByRange(10) >= 2 then
-				return A.CrimsonTempest:Show(icon)
+			if  (Player:ComboPointsDeficit() <= 1 or Player:ComboPoints() == Unit(player):HasBuffsStacks(A.EchoingReprimandBuff.ID)) and A.CrimsonTempest:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.CrimsonTempest.ID) <= 2
+				then
+					if MultiUnits:GetByRange(10) >= 2 or (MultiUnits:GetByRange(10) == 1 and Unit(unitID):HasDeBuffs(A.Shiv.ID) == 0) then			
+						return A.CrimsonTempest:Show(icon)
+					end
 			end  
 			--todo snappshotting
 			
@@ -802,7 +806,10 @@ local function Interrupts()
 					if 	(Unit(val):HasDeBuffs(A.Garrote.ID, true) == 0 and Unit(val):TimeToDie() > 1 and A.Shiv:IsInRange(val))				
 						and 
 						(( UnitCanAttack("player", val) and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) then
-							return A:Show(icon, ACTION_CONST_AUTOTARGET)
+						
+							return 
+							
+							A:Show(icon, ACTION_CONST_AUTOTARGET)
 					end
 				end
 			end

@@ -339,6 +339,9 @@ A[3] = function(icon)
 	if A.InstanceInfo.ID == 2286 and Unit("target"):Name() == "Farra" then return end 
     -- Stop rotation on Torghast Containers
 	if Unit("target"):Name() == "Ashen Phylactery" then return end
+	--164698 or 167986 or 165533 or 165523 or 170525 or 167987 or 178523 or 179514 or
+
+	
 	
 	--Testing
 
