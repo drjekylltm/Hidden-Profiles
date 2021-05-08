@@ -425,7 +425,6 @@ local function Interrupts()
 					and ((UnitCanAttack("player", val) and Unit(val):GetRange() <=8  and not Unit(val):IsTotem())	or Unit(val):IsDummy()) -- and UnitThreatSituation("player", val) ~= nil
 					and  ((useKick and castLeft > 0 and not notKickAble  and A.AbsentImun(nil, val, Temp.TotalAndPhysKick) and A.Kick:IsReady(val)) 
                     or (useCC and (Player:GetStance() ~= 0) and A.CheapShot:IsReady(val) and A.CheapShot:AbsentImun(val, Temp.TotalAndPhysAndCC) and Unit(val):GetDR("stun") > 0 and not Unit(val):IsBoss() and Unit(val):HasBuffs(A.Sanguine.ID) == 0) 
-                    or (useCC and A.Gouge:IsReady(val) and A.Gouge:AbsentImun(val, Temp.TotalAndPhysAndCC) and Player:IsBehind(.3) and Unit(val):GetDR("incapacitate") > 0 and not Unit(val):IsBoss()) 
                     or (useCC and A.KidneyShot:IsReady(val) and A.KidneyShot:AbsentImun(val, Temp.TotalAndPhysAndCC) and Player:ComboPoints() >= 1 and Unit(val):GetDR("stun") > 0 and not Unit(val):IsBoss() and Unit(val):HasBuffs(A.Sanguine.ID) == 0)
                     or (useRacial and A.QuakingPalm:IsReady(val) and A.QuakingPalm:AbsentImun(val, Temp.TotalAndPhysAndCC) and Unit(val):GetDR("incapacitate") > 0 and not Unit(val):IsBoss()) 
                     or (useCC and A.Blind:IsReady(val) and A.Blind:AbsentImun(val, Temp.TotalAndPhysAndCC) and Unit(val):GetDR("disorient") > 0 and not Unit(val):IsBoss()))
@@ -663,8 +662,17 @@ local function Interrupts()
             if A.MarkedForDeath:IsReady(unitID) and Player:ComboPointsDeficit() >=4 and (not GetToggle(1, "BossMods") or Unit(player):CombatTime() > 0) and not Unit(unitID):IsTotem() then
                 return A.MarkedForDeath:Show(icon)
             end
+			
+			
+			
+			
 			--todo improve opener logic, a hard timer sucks probably
-			if A.Vendetta:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Vendetta.ID) == 0 and Unit(unitID):TimeToDie() > 10 and ((A.Vanish:GetCooldown() <= 1 and GetToggle(2, "VanishSetting") == 2) or (GetToggle(2, "VanishSetting") ~= 2)) and Unit(unitID):HasDeBuffs(A.Rupture.ID, true) ~= 0 and Player:Energy() > 44 
+			if A.Vendetta:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Vendetta.ID, true) == 0 and Unit(unitID):TimeToDie() > 10 and 
+			(((A.Vanish:GetCooldown() <= 1 or A.Vanish:GetCooldown() >= 110) and GetToggle(2, "VanishSetting") == 2) or (GetToggle(2, "VanishSetting") ~= 2)) 
+			
+			and Unit(unitID):HasDeBuffs(A.Rupture.ID, true) ~= 0 
+			and Unit(unitID):HasDeBuffs(A.Garrote.ID, true) ~= 0 
+			and Player:Energy() > 44 
 			and ((not A.Flagellation:IsSpellLearned()) or (A.Flagellation:GetCooldown() ~= 0))
 			then
 				return A.Vendetta:Show(icon)
@@ -672,8 +680,6 @@ local function Interrupts()
 			
 			-- Use Vanish if setting is set to Auto 
 			if A.Vanish:IsReady(player) and GetToggle(2, "VanishSetting") == 2 and A.Shiv:IsInRange(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) == 0 
-			
-
 			then			
 				--With  Subterfuge, use it when  Garrote is ready with enough space for incoming combo points (i.e. pay attention to having only 0-1 combo points if you are going to apply it to multiple targets). This should be done during  Vendetta, during the last 5.4 seconds of the DoT if you have an empowered one up from the opener, otherwise without regard to the remaining time on your active  Garrote.
 				--todo garrote snapshot	
@@ -700,11 +706,14 @@ local function Interrupts()
 			end
 
 			--Exsanguinate when Rupture is up for longer than it's base duration and  Garrote is also up for more than 6 seconds.
-			if A.Exsanguinate:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Rupture.ID) >= 20 and Unit(unitID):HasDeBuffs(A.Garrote.ID) >= 20 then 
+			if A.Exsanguinate:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Rupture.ID, true) >= 20 and Unit(unitID):HasDeBuffs(A.Garrote.ID, true) >= 20 then 
 				return A.Exsanguinate:Show(icon)
 			end
 
 
+	   
+	   
+	   
 	   
 		    if A.Fireblood:IsReady(unitID, true) and A.Shiv:IsInRange(unitID) and Player:Energy() < 44 then
                 return A.Fireblood:Show(icon)
@@ -740,9 +749,9 @@ local function Interrupts()
 				return A.Rupture:Show(icon)
 			end
 			--Keep up  Crimson Tempest (if talented) against 2 or more targets with four or more combo points. Refresh it only during the last 2s.
-			if  (Player:ComboPointsDeficit() <= 1 or Player:ComboPoints() == Unit(player):HasBuffsStacks(A.EchoingReprimandBuff.ID)) and A.CrimsonTempest:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.CrimsonTempest.ID) <= 2
+			if  (Player:ComboPointsDeficit() <= 1 or Player:ComboPoints() == Unit(player):HasBuffsStacks(A.EchoingReprimandBuff.ID)) and A.CrimsonTempest:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.CrimsonTempest.ID, true) <= 2
 				then
-					if MultiUnits:GetByRange(10) >= 2 or (MultiUnits:GetByRange(10) == 1 and Unit(unitID):HasDeBuffs(A.Shiv.ID) == 0) then			
+					if MultiUnits:GetByRange(10) >= 2 or (MultiUnits:GetByRange(10) == 1 and Unit(unitID):HasDeBuffs(A.Shiv.ID, true) == 0) then			
 						return A.CrimsonTempest:Show(icon)
 					end
 			end  
@@ -750,7 +759,7 @@ local function Interrupts()
 			
 			--Keep up  Rupture with four or more combo points on all targets.
 			--Rupture Targeting
-			if (Player:ComboPointsDeficit() <= 1 or Player:ComboPoints() == Unit(player):HasBuffsStacks(A.EchoingReprimandBuff.ID)) and A.Rupture:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Rupture.ID) >= 6 and Action.GetToggle(1, "AutoTarget") and Unit(player):CombatTime() > 0 and Player:GetDeBuffsUnitCount(A.Rupture.ID) <= MultiUnits:GetByRange(5) and GetCurrentGCD() ~= 0
+			if (Player:ComboPointsDeficit() <= 1 or Player:ComboPoints() == Unit(player):HasBuffsStacks(A.EchoingReprimandBuff.ID)) and A.Rupture:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Rupture.ID, true) >= 6 and Action.GetToggle(1, "AutoTarget") and Unit(player):CombatTime() > 0 and Player:GetDeBuffsUnitCount(A.Rupture.ID) <= MultiUnits:GetByRange(5) and GetCurrentGCD() ~= 0
 			then  
 				for val in pairs(ActiveUnitPlates) do
 					if 	(Unit(val):HasDeBuffs(A.Rupture.ID, true) <= 6 and Unit(val):TimeToDie() > 3 and A.Shiv:IsInRange(val))				
@@ -762,7 +771,7 @@ local function Interrupts()
 			end
 
 
-			if  (Player:ComboPointsDeficit() <= 1 or Player:ComboPoints() == Unit(player):HasBuffsStacks(A.EchoingReprimandBuff.ID)) and A.Rupture:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Rupture.ID) <= 6 then
+			if  (Player:ComboPointsDeficit() <= 1 or Player:ComboPoints() == Unit(player):HasBuffsStacks(A.EchoingReprimandBuff.ID)) and A.Rupture:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Rupture.ID, true) <= 6 then
 				return A.Rupture:Show(icon)
 			end
 			if  (Player:ComboPointsDeficit() <= 1 or Player:ComboPoints() == Unit(player):HasBuffsStacks(A.EchoingReprimandBuff.ID)) and A.Envenom:IsReady(unitID) then
@@ -815,7 +824,7 @@ local function Interrupts()
 			end
 			--todo Garrote Snapshotting
 			
-            if A.Garrote:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Garrote.ID) <= 5.4  then
+            if A.Garrote:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Garrote.ID, true) <= 5.4  then
                 return A.Garrote:Show(icon)
             end
 			--Use  Fan of Knives at 4 or more targets or 3 targets if any of them has no Deadly Poison ticking.
