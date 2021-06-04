@@ -1,6 +1,6 @@
 local _G, select, setmetatable                        = _G, select, setmetatable
 
-local TMW                                             = _G.TMW 
+local TMW                                             = _G.TMW
 
 local A                                             = _G.Action
 
@@ -11,7 +11,7 @@ local GetSpellInfo                                  = A.GetSpellInfo
 local GetToggle                                     = A.GetToggle
 local GetLatency                                    = A.GetLatency
 local InterruptIsValid                              = A.InterruptIsValid
-local Unit                                          = A.Unit 
+local Unit                                          = A.Unit
 
 local ACTION_CONST_ROGUE_SUBTLETY                   = CONST.ROGUE_SUBTLETY
 local ACTION_CONST_ROGUE_ASSASSINATION             	= CONST.ROGUE_ASSASSINATION
@@ -31,7 +31,7 @@ local S                                                = {
     CloakofShadows                                    		= (GetSpellInfo(31224)),
     SlowTotem                                        		= (GetSpellInfo(2484)),
     AstralShift                                        		= (GetSpellInfo(108271)),
-    Stormkeeper                                        		= (GetSpellInfo(191634)), 
+    Stormkeeper                                        		= (GetSpellInfo(191634)),
     FEINT                                                   = (GetSpellInfo(1966)),
 	AR                                                   	= (GetSpellInfo(13750)),
 	Echoing													= (GetSpellInfo(323547)),
@@ -50,44 +50,44 @@ L.PVP                                                 = {
     ANY = "PvP",
 }
 L.MOUSEOVER                                            = {
-    enUS = "Interrupt\n@mouseover", 
-    ruRU = "Использовать\n@mouseover", 
+    enUS = "Interrupt\n@mouseover",
+    ruRU = "Использовать\n@mouseover",
 }
 L.MOUSEOVERTT                                        = {
-    enUS = "Will unlock use actions for @mouseover units\nExample: Kick, Kidney Shot\n\nRight click: Create macro", 
-    ruRU = "Разблокирует использование действий для @mouseover юнитов\nНапример: Воскрешение, Хилинг\n\nПравая кнопка мышки: Создать макрос", 
+    enUS = "Will unlock use actions for @mouseover units\nExample: Kick, Kidney Shot\n\nRight click: Create macro",
+    ruRU = "Разблокирует использование действий для @mouseover юнитов\nНапример: Воскрешение, Хилинг\n\nПравая кнопка мышки: Создать макрос",
 }
 L.target                                            = {
-    enUS = "Interrupt\n@target", 
-    ruRU = "Использовать\n@target", 
+    enUS = "Interrupt\n@target",
+    ruRU = "Использовать\n@target",
 }
 L.targettt                                        = {
-    enUS = "Will unlock use actions for @target units\nExample: Kick, Kidney Shot\n\nRight click: Create macro", 
-    ruRU = "Разблокирует использование действий для @target юнитов\nНапример: Воскрешение, Хилинг\n\nПравая кнопка мышки: Создать макрос", 
+    enUS = "Will unlock use actions for @target units\nExample: Kick, Kidney Shot\n\nRight click: Create macro",
+    ruRU = "Разблокирует использование действий для @target юнитов\nНапример: Воскрешение, Хилинг\n\nПравая кнопка мышки: Создать макрос",
 }
 L.AOE                                                = {
-    enUS = "Use\nAoE", 
-    ruRU = "Использовать\nAoE", 
+    enUS = "Use\nAoE",
+    ruRU = "Использовать\nAoE",
 }
 L.AOETT                                                = {
-    enUS = "Enable BladeFlurry in rotation\n\nRight click: Create macro", 
-    ruRU = "Включает ротацию для нескольких целей\n\nПравая кнопка мышки: Создать макрос", 
+    enUS = "Enable BladeFlurry in rotation\n\nRight click: Create macro",
+    ruRU = "Включает ротацию для нескольких целей\n\nПравая кнопка мышки: Создать макрос",
 }
 L.REBTE                                                = {
-    enUS = "Between the Eyes\nRe-target", 
+    enUS = "Between the Eyes\nRe-target",
 	ruRU = "Промеж глаз\nцель",
 }
 L.REBTETT                                                = {
-    ANY = "Requires Auto Target\nRetarget Enemy with Between The Eyes Debuff\nMay Prevent Manual Targeting\n\nRight click: Create macro", 
+    ANY = "Requires Auto Target\nRetarget Enemy with Between The Eyes Debuff\nMay Prevent Manual Targeting\n\nRight click: Create macro",
 
 }
 L.OOCStealth                                                = {
-    enUS = "Use\nOOC Stealth", 
-    ruRU = "Скрытность", 
+    enUS = "Use\nOOC Stealth",
+    ruRU = "Скрытность",
 }
 L.OOCStealthTT                                                = {
-    enUS = "Enable OOC Stealth\n\nRight click: Create macro", 
-    ruRU = "Включает ротацию для нескольких целей\n\nПравая кнопка мышки: Создать макрос", 
+    enUS = "Enable OOC Stealth\n\nRight click: Create macro",
+    ruRU = "Включает ротацию для нескольких целей\n\nПравая кнопка мышки: Создать макрос",
 }
 L.CDS                                            = {
     enUS = "Cooldowns",
@@ -95,11 +95,11 @@ L.CDS                                            = {
 }
 L.Totems                                            = {
     enUS = "Totems",
-	ruRU = "Тотемы",	
+	ruRU = "Тотемы",
 }
 L.selfDefence                                            = {
     enUS = "Self Defence",
-	ruRU = "Самооборона",	
+	ruRU = "Самооборона",
 }
 L.Poisons                                            = {
     enUS = "Poisons",
@@ -110,7 +110,7 @@ L.Padding                                            = {
 }
 L.Interrupting                                            = {
     enUS = "Interrupting",
-    ruRU = "Прерывание",	
+    ruRU = "Прерывание",
 }
 L.AutoTargeting                                            = {
     enUS = "Auto Targeting",
@@ -183,24 +183,24 @@ L.Bloodlust                                            = {
 local SliderMarginOptions = { margin = { top = 10 } }
 local LayoutConfigOptions = { gutter = 6, padding = { left = 5, right = 5 } }
 A.Data.ProfileEnabled[A.CurrentProfile]             = true
-A.Data.ProfileUI                                     = {    
-    DateTime = "v9.5 (8.5.2021) #Sinning",
+A.Data.ProfileUI                                     = {
+    DateTime = "v9.6 (4.6.2021) #Patch Preping",
     [2] = {
-        [ACTION_CONST_ROGUE_SUBTLETY] = {     
+        [ACTION_CONST_ROGUE_SUBTLETY] = {
 
-           
+
             LayoutOptions = LayoutConfigOptions,
             {
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "mouseover",
                     DBV             = true,
-                    L                 = L.MOUSEOVER, 
-                    TT                 = L.MOUSEOVERTT, 
+                    L                 = L.MOUSEOVER,
+                    TT                 = L.MOUSEOVERTT,
                     M                 = {},
                 },
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "AoE",
                     DBV             = true,
                     L                 = L.AOE,
@@ -208,7 +208,7 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "OOCStealth",
                     DBV             = true,
                     L                 = L.OOCStealth,
@@ -218,84 +218,84 @@ A.Data.ProfileUI                                     = {
             },
             {
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "MOExplosive",
                     DBV             = true,
-                    L = { 
+                    L = {
                         ANY = "Mouse Over\nTarget Explosives",
-                    }, 
-                    TT = { 
-                        ANY = "Use Mouse Over to Target Explosives\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Use Mouse Over to Target Explosives\n\nRight click: Create macro",
+                    },
                     M                 = {},
                 },
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "MOTotem",
                     DBV             = true,
-                    L = { 
+                    L = {
                         ANY = "Mouse Over\nTarget Totems",
-                    }, 
-                    TT = { 
-                        ANY = "Use Mouse Over to Target Totems\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Use Mouse Over to Target Totems\n\nRight click: Create macro",
+                    },
                     M                 = {},
                 },
 				{
-                    E               = "Checkbox", 
+                    E               = "Checkbox",
                     DB              = "InterruptList",
                     DBV             = true,
-                    L = { 
+                    L = {
                         ANY = "Use Ryan's\nInterrupt List",
-                    }, 
-                    TT = { 
-                        ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",
+                    },
                     M                 = {},
                 },
             },
-            --[[{ -- [2] Opener 
+            --[[{ -- [2] Opener
                 {
                     E                 = "Header",
                     L                 = L.Opener,
                 },
             },--]]
-            {    
+            {
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "Melee Only" , value = 5 },
                         { text = "25 Yards" , value = 25 },
                     },
                     DB = "ShadowstrikeRange",
                     DBV = 25,
-                    L = { 
+                    L = {
                         ANY = "Shadowstrike Max Range",
-                    }, 
-                    TT = { 
-                        ANY = "Select the range to use Shadowstrike\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Select the range to use Shadowstrike\n\nRight click: Create macro",
+                    },
                     M = {},
                 },
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "Manual Open", value = "OFF" },
                         { text = A.GetSpellInfo(185438), value = "Shadowstrike" },
-                        { text = A.GetSpellInfo(1833), value = "CheapShot" },						
+                        { text = A.GetSpellInfo(1833), value = "CheapShot" },
                     },
                     DB = "Opener",
                     DBV = "Shadowstrike",
-                    L = { 
+                    L = {
                         ANY = "Opener",
-                    }, 
-                    TT = { 
-                        ANY = "Select the opener to break stealth\nManual open will not break stealth\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Select the opener to break stealth\nManual open will not break stealth\n\nRight click: Create macro",
+                    },
                     M = {},
-                },  
+                },
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "Auto", value = 2 },
                         { text = "Manual", value = 1 },
@@ -303,28 +303,28 @@ A.Data.ProfileUI                                     = {
                     },
                     DB = "VanishSetting",
                     DBV = 0,
-                    L = { 
+                    L = {
                         ANY = "Vanish + Ambush Usage",
-                    }, 
-                    TT = { 
-                        ANY = "Auto: Vanish & Ambush\nManual: Ambush After Manual Vanish\nStop: Stop Rotation After Vanish\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Auto: Vanish & Ambush\nManual: Ambush After Manual Vanish\nStop: Stop Rotation After Vanish\n\nRight click: Create macro",
+                    },
                     M = {},
-                },				
+                },
             },
 			{
-			
+
 			},
-			
-            { -- [2] Poisons 
+
+            { -- [2] Poisons
                 {
                     E                 = "Header",
                     L                 = L.Poisons,
                 },
             },
-            {    
+            {
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "OFF", value = "OFF" },
                         { text = A.GetSpellInfo(315584), value = "InstantPoison" },
@@ -332,16 +332,16 @@ A.Data.ProfileUI                                     = {
                     },
                     DB = "LethalPoison",
                     DBV = "InstantPoison",
-                    L = { 
+                    L = {
                         ANY = "Lethal Poison",
-                    }, 
-                    TT = { 
-                        ANY = "Select the lethal poison the rotation should always maintain\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Select the lethal poison the rotation should always maintain\n\nRight click: Create macro",
+                    },
                     M = {},
-                },            
+                },
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "OFF", value = "OFF" },
                         { text = A.GetSpellInfo(5761), value = "NumbingPoison" },
@@ -349,28 +349,28 @@ A.Data.ProfileUI                                     = {
                     },
                     DB = "NonLethalPoison",
                     DBV = "NumbingPoison",
-                    L = { 
+                    L = {
                         ANY = "Non-Lethal Poison",
-                    }, 
-                    TT = { 
-                        ANY = "Select the non-lethal poison the rotation should always maintain\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Select the non-lethal poison the rotation should always maintain\n\nRight click: Create macro",
+                    },
                     M = {},
                 },
-            },            
-            
-            
-            { -- [2] Self Defensives 
+            },
+
+
+            { -- [2] Self Defensives
                 {
                     E                 = "Header",
                     L                 = L.selfDefence,
                 },
             },
             {
-                {                    
-                    E                 = "Slider",                                                     
-                    MIN             = -1, 
-                    MAX                 = 100,                            
+                {
+                    E                 = "Slider",
+                    MIN             = -1,
+                    MAX                 = 100,
                     DB                 = "Feint",
                     DBV             = 100,
                     ONOFF             = true,
@@ -378,21 +378,21 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
                 {
-                    E                = "Slider",                                                     
-                    MIN             = -1, 
-                    MAX                = 100,                            
+                    E                = "Slider",
+                    MIN             = -1,
+                    MAX                = 100,
                     DB                 = "CrimsonVial",
                     DBV             = 60,
                     ONOFF             = true,
-                    L                 = L.CrimsonVial,                
+                    L                 = L.CrimsonVial,
                     M                 = {},
                 },
             },
-            {    
+            {
                 {
-                    E                 = "Slider",                                                     
-                    MIN             = -1, 
-                    MAX             = 100,                            
+                    E                 = "Slider",
+                    MIN             = -1,
+                    MAX             = 100,
                     DB                 = "Evasion",
                     DBV             = 100,
                     ONOFF             = true,
@@ -400,9 +400,9 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
                 {
-                    E                 = "Slider",                                                     
-                    MIN                = -1, 
-                    MAX                = 100,                            
+                    E                 = "Slider",
+                    MIN                = -1,
+                    MAX                = 100,
                     DB                 = "CloakofShadows",
                     DBV                = 100,
                     ONOFF             = true,
@@ -412,29 +412,29 @@ A.Data.ProfileUI                                     = {
             },
         },
 
-        
-        [ACTION_CONST_ROGUE_ASSASSINATION] = {             
+
+        [ACTION_CONST_ROGUE_ASSASSINATION] = {
             LayoutOptions = LayoutConfigOptions,
-             {    
+             {
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "Manual Open", value = "OFF" },
                         { text = A.GetSpellInfo(703), value = "Garrote" },
-                        { text = A.GetSpellInfo(1833), value = "CheapShot" },				
+                        { text = A.GetSpellInfo(1833), value = "CheapShot" },
                     },
                     DB = "Opener",
                     DBV = "Garrote",
-                    L = { 
+                    L = {
                         ANY = "Opener",
-                    }, 
-                    TT = { 
-                        ANY = "Select the opener to break stealth\nManual open will not break stealth\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Select the opener to break stealth\nManual open will not break stealth\n\nRight click: Create macro",
+                    },
                     M = {},
-                },  
+                },
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "Auto", value = 2 },
                         { text = "Manual", value = 1 },
@@ -442,19 +442,19 @@ A.Data.ProfileUI                                     = {
                     },
                     DB = "VanishSetting",
                     DBV = 0,
-                    L = { 
+                    L = {
                         ANY = "Vanish Usage",
-                    }, 
-                    TT = { 
-                        ANY = "Auto: Vanish + Attack \nManual: Attack After Manual Vanish\nStop: Stop Rotation After Vanish\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Auto: Vanish + Attack \nManual: Attack After Manual Vanish\nStop: Stop Rotation After Vanish\n\nRight click: Create macro",
+                    },
                     M = {},
-                },				
+                },
 
 		    },
 			{
 			                {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "AoE",
                     DBV             = true,
                     L                 = L.AOE,
@@ -462,7 +462,7 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "OOCStealth",
                     DBV             = true,
                     L                 = L.OOCStealth,
@@ -470,19 +470,19 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
 				{
-                    E               = "Checkbox", 
+                    E               = "Checkbox",
                     DB              = "InterruptList",
                     DBV             = true,
-                    L = { 
+                    L = {
                         ANY = "Use Ryan's\nInterrupt List",
-                    }, 
-                    TT = { 
-                        ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",
+                    },
                     M                 = {},
                 },
 			},
-            { -- [2] Auto Targetting 
+            { -- [2] Auto Targetting
                 {
                     E                 = "Header",
                     L                 = L.AutoTargeting,
@@ -490,51 +490,51 @@ A.Data.ProfileUI                                     = {
             },
             {
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "MOExplosive",
                     DBV             = true,
-                    L = { 
+                    L = {
                         ANY = "Mouse Over\nTarget Explosives",
-                    }, 
-                    TT = { 
-                        ANY = "Use Mouse Over to Target Explosives\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Use Mouse Over to Target Explosives\n\nRight click: Create macro",
+                    },
                     M                 = {},
                 },
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "MOTotem",
                     DBV             = true,
-                    L = { 
+                    L = {
                         ANY = "Mouse Over\nTarget Totems",
-                    }, 
-                    TT = { 
-                        ANY = "Use Mouse Over to Target Totems\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Use Mouse Over to Target Totems\n\nRight click: Create macro",
+                    },
                     M                 = {},
                 },
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "ATInterrupt",
                     DBV             = true,
-                    L = { 
+                    L = {
                         ANY = "Auto Target\nTo Interrupt",
-                    }, 
-                    TT = { 
-                        ANY = "Requires Auto Target\nSwap Targets to Interrupt\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Requires Auto Target\nSwap Targets to Interrupt\n\nRight click: Create macro",
+                    },
                     M                 = {},
                 },
             },
-            { -- [2] Poisons 
+            { -- [2] Poisons
                 {
                     E                 = "Header",
                     L                 = L.Poisons,
                 },
             },
-            {    
+            {
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "OFF", value = "OFF" },
                         { text = A.GetSpellInfo(2823), value = "DeadlyPoison" },
@@ -542,16 +542,16 @@ A.Data.ProfileUI                                     = {
                     },
                     DB = "LethalPoison",
                     DBV = "DeadlyPoison",
-                    L = { 
+                    L = {
                         ANY = "Lethal Poison",
-                    }, 
-                    TT = { 
-                        ANY = "Select the lethal poison the rotation should always maintain\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Select the lethal poison the rotation should always maintain\n\nRight click: Create macro",
+                    },
                     M = {},
-                },            
+                },
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "OFF", value = "OFF" },
                         { text = A.GetSpellInfo(5761), value = "NumbingPoison" },
@@ -559,26 +559,26 @@ A.Data.ProfileUI                                     = {
                     },
                     DB = "NonLethalPoison",
                     DBV = "NumbingPoison",
-                    L = { 
+                    L = {
                         ANY = "Non-Lethal Poison",
-                    }, 
-                    TT = { 
-                        ANY = "Select the non-lethal poison the rotation should always maintain\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Select the non-lethal poison the rotation should always maintain\n\nRight click: Create macro",
+                    },
                     M = {},
                 },
-            },            
-            { -- [2] Self Defensives 
+            },
+            { -- [2] Self Defensives
                 {
                     E                 = "Header",
                     L                 = L.selfDefence,
                 },
             },
             {
-                {                    
-                    E                 = "Slider",                                                     
-                    MIN             = -1, 
-                    MAX                 = 100,                            
+                {
+                    E                 = "Slider",
+                    MIN             = -1,
+                    MAX                 = 100,
                     DB                 = "Feint",
                     DBV             = 100,
                     ONOFF             = true,
@@ -586,21 +586,21 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
                 {
-                    E                = "Slider",                                                     
-                    MIN             = -1, 
-                    MAX                = 100,                            
+                    E                = "Slider",
+                    MIN             = -1,
+                    MAX                = 100,
                     DB                 = "CrimsonVial",
                     DBV             = 60,
                     ONOFF             = true,
-                    L                 = L.CrimsonVial,                
+                    L                 = L.CrimsonVial,
                     M                 = {},
                 },
             },
-            {    
+            {
                 {
-                    E                 = "Slider",                                                     
-                    MIN             = -1, 
-                    MAX             = 100,                            
+                    E                 = "Slider",
+                    MIN             = -1,
+                    MAX             = 100,
                     DB                 = "Evasion",
                     DBV             = 100,
                     ONOFF             = true,
@@ -608,9 +608,9 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
                 {
-                    E                 = "Slider",                                                     
-                    MIN                = -1, 
-                    MAX                = 100,                            
+                    E                 = "Slider",
+                    MIN                = -1,
+                    MAX                = 100,
                     DB                 = "CloakofShadows",
                     DBV                = 100,
                     ONOFF             = true,
@@ -619,45 +619,45 @@ A.Data.ProfileUI                                     = {
                 },
             },
         },
-        
-        [ACTION_CONST_ROGUE_OUTLAW] = {             
+
+        [ACTION_CONST_ROGUE_OUTLAW] = {
             LayoutOptions = LayoutConfigOptions,
-             {    
+             {
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "Melee Only" , value = 5 },
                         { text = "20 Yards" , value = 20 },
                     },
                     DB = "BladeRushRange",
                     DBV = 20,
-                    L = { 
+                    L = {
                         ANY = "Blade Rush Max Range",
-                    }, 
-                    TT = { 
-                        ANY = "Select the range to use Blade Rush\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Select the range to use Blade Rush\n\nRight click: Create macro",
+                    },
                     M = {},
                 },
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "Manual Open", value = "OFF" },
                         { text = A.GetSpellInfo(8676), value = "Ambush" },
-                        { text = A.GetSpellInfo(1833), value = "CheapShot" },				
+                        { text = A.GetSpellInfo(1833), value = "CheapShot" },
                     },
                     DB = "Opener",
                     DBV = "Ambush",
-                    L = { 
+                    L = {
                         ANY = "Opener",
-                    }, 
-                    TT = { 
-                        ANY = "Select the opener to break stealth\nManual open will not break stealth\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Select the opener to break stealth\nManual open will not break stealth\n\nRight click: Create macro",
+                    },
                     M = {},
-                },  
+                },
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "Auto", value = 2 },
                         { text = "Manual", value = 1 },
@@ -665,30 +665,30 @@ A.Data.ProfileUI                                     = {
                     },
                     DB = "VanishSetting",
                     DBV = 0,
-                    L = { 
+                    L = {
                         ANY = "Vanish + Ambush Usage",
-                    }, 
-                    TT = { 
-                        ANY = "Auto: Vanish & Ambush\nManual: Ambush After Manual Vanish\nStop: Stop Rotation After Vanish\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Auto: Vanish & Ambush\nManual: Ambush After Manual Vanish\nStop: Stop Rotation After Vanish\n\nRight click: Create macro",
+                    },
                     M = {},
-                },				
-            },           
+                },
+            },
 			{
 				{
-                    E               = "Checkbox", 
+                    E               = "Checkbox",
                     DB              = "InterruptList",
                     DBV             = true,
-                    L = { 
+                    L = {
                         ANY = "Use Ryan's\nInterrupt List",
-                    }, 
-                    TT = { 
-                        ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",
+                    },
                     M                 = {},
-                },                
+                },
 				{
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "AoE",
                     DBV             = true,
                     L                 = L.AOE,
@@ -696,25 +696,25 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "OOCStealth",
                     DBV             = true,
                     L                 = L.OOCStealth,
                     TT                 = L.OOCStealthTT,
                     M                 = {},
                 },
-				{                    
-                    E                 = "Slider",                                                     
-                    MIN             = 1, 
-                    MAX                 = 10,                            
+				{
+                    E                 = "Slider",
+                    MIN             = 1,
+                    MAX                 = 10,
                     DB                 = "Adrenaline",
                     DBV             = 1,
                     ONOFF             = false,
                     L                 = L.AR,
                     M                 = {},
-					TT				={ 
-                        ANY = "Number of Non-Boss units to use Adernanline Rush on\n\nRight click: Create macro",  
-                    }, 
+					TT				={
+                        ANY = "Number of Non-Boss units to use Adernanline Rush on\n\nRight click: Create macro",
+                    },
                 },
             },
            --[[ { -- Padding
@@ -724,7 +724,7 @@ A.Data.ProfileUI                                     = {
                 },
             },
 			--]]
-            { -- [2] Auto Targetting 
+            { -- [2] Auto Targetting
                 {
                     E                 = "Header",
                     L                 = L.AutoTargeting,
@@ -732,31 +732,31 @@ A.Data.ProfileUI                                     = {
             },
             {
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "MOExplosive",
                     DBV             = true,
-                    L = { 
+                    L = {
                         ANY = "Mouse Over\nTarget Explosives",
-                    }, 
-                    TT = { 
-                        ANY = "Use Mouse Over to Target Explosives\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Use Mouse Over to Target Explosives\n\nRight click: Create macro",
+                    },
                     M                 = {},
                 },
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "MOTotem",
                     DBV             = true,
-                    L = { 
+                    L = {
                         ANY = "Mouse Over\nTarget Totems",
-                    }, 
-                    TT = { 
-                        ANY = "Use Mouse Over to Target Totems\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Use Mouse Over to Target Totems\n\nRight click: Create macro",
+                    },
                     M                 = {},
                 },
 			    {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "REBTE",
                     DBV             = false,
                     L                 = L.REBTE,
@@ -764,27 +764,27 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
                 {
-                    E                 = "Checkbox", 
+                    E                 = "Checkbox",
                     DB                 = "ATInterrupt",
                     DBV             = true,
-                    L = { 
+                    L = {
                         ANY = "Auto Target\nTo Interrupt",
-                    }, 
-                    TT = { 
-                        ANY = "Requires Auto Target\nSwap Targets to Interrupt\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Requires Auto Target\nSwap Targets to Interrupt\n\nRight click: Create macro",
+                    },
                     M                 = {},
                 },
             },
-            { -- [2] Poisons 
+            { -- [2] Poisons
                 {
                     E                 = "Header",
                     L                 = L.Poisons,
                 },
             },
-            {    
+            {
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "OFF", value = "OFF" },
                         { text = A.GetSpellInfo(315584), value = "InstantPoison" },
@@ -792,16 +792,16 @@ A.Data.ProfileUI                                     = {
                     },
                     DB = "LethalPoison",
                     DBV = "InstantPoison",
-                    L = { 
+                    L = {
                         ANY = "Lethal Poison",
-                    }, 
-                    TT = { 
-                        ANY = "Select the lethal poison the rotation should always maintain\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Select the lethal poison the rotation should always maintain\n\nRight click: Create macro",
+                    },
                     M = {},
-                },            
+                },
                 {
-                    E = "Dropdown",                                                         
+                    E = "Dropdown",
                     OT = {
                         { text = "OFF", value = "OFF" },
                         { text = A.GetSpellInfo(5761), value = "NumbingPoison" },
@@ -809,26 +809,26 @@ A.Data.ProfileUI                                     = {
                     },
                     DB = "NonLethalPoison",
                     DBV = "NumbingPoison",
-                    L = { 
+                    L = {
                         ANY = "Non-Lethal Poison",
-                    }, 
-                    TT = { 
-                        ANY = "Select the non-lethal poison the rotation should always maintain\n\nRight click: Create macro",  
-                    }, 
+                    },
+                    TT = {
+                        ANY = "Select the non-lethal poison the rotation should always maintain\n\nRight click: Create macro",
+                    },
                     M = {},
                 },
-            },            
-            { -- [2] Self Defensives 
+            },
+            { -- [2] Self Defensives
                 {
                     E                 = "Header",
                     L                 = L.selfDefence,
                 },
             },
             {
-                {                    
-                    E                 = "Slider",                                                     
-                    MIN             = -1, 
-                    MAX                 = 100,                            
+                {
+                    E                 = "Slider",
+                    MIN             = -1,
+                    MAX                 = 100,
                     DB                 = "Feint",
                     DBV             = 100,
                     ONOFF             = true,
@@ -836,21 +836,21 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
                 {
-                    E                = "Slider",                                                     
-                    MIN             = -1, 
-                    MAX                = 100,                            
+                    E                = "Slider",
+                    MIN             = -1,
+                    MAX                = 100,
                     DB                 = "CrimsonVial",
                     DBV             = 60,
                     ONOFF             = true,
-                    L                 = L.CrimsonVial,                
+                    L                 = L.CrimsonVial,
                     M                 = {},
                 },
             },
-            {    
+            {
                 {
-                    E                 = "Slider",                                                     
-                    MIN             = -1, 
-                    MAX             = 100,                            
+                    E                 = "Slider",
+                    MIN             = -1,
+                    MAX             = 100,
                     DB                 = "Evasion",
                     DBV             = 100,
                     ONOFF             = true,
@@ -858,9 +858,9 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
                 {
-                    E                 = "Slider",                                                     
-                    MIN                = -1, 
-                    MAX                = 100,                            
+                    E                 = "Slider",
+                    MIN                = -1,
+                    MAX                = 100,
                     DB                 = "CloakofShadows",
                     DBV                = 100,
                     ONOFF             = true,
@@ -872,7 +872,7 @@ A.Data.ProfileUI                                     = {
 	},
 }
 -----------------------------------------
---                   PvP  
+--                   PvP
 -----------------------------------------
 local DisarmPvPunits     = setmetatable({}, { __index = function(t, v)
             t[v] = GetToggle(2, "DisarmPvPunits")
@@ -882,68 +882,68 @@ local ImunBuffsCC              = {"CCTotalImun", "DamagePhysImun", "TotalImun"}
 local ImunBuffsInterrupt     = {"KickImun", "TotalImun", "DamagePhysImun"}
 
 function A.DisarmIsReady(unitID, skipShouldStop, isMsg)
-    if A.IsInPvP then 
+    if A.IsInPvP then
         local isArena = unitID:match("arena")
         if     (
-            (unitID == "arena1" and DisarmPvPunits[A.PlayerSpec][1]) or 
+            (unitID == "arena1" and DisarmPvPunits[A.PlayerSpec][1]) or
             (unitID == "arena2" and DisarmPvPunits[A.PlayerSpec][2]) or
             (unitID == "arena3" and DisarmPvPunits[A.PlayerSpec][3]) or
-            (not isArena and DisarmPvPunits[A.PlayerSpec][4]) 
-        ) 
-        then 
-            if (not isArena and Unit(unitID):IsEnemy() and Unit(unitID):IsPlayer()) or (isArena and not Unit(unitID):InLOS() and (A.Zone == "arena" or A.Zone == "pvp")) then 
+            (not isArena and DisarmPvPunits[A.PlayerSpec][4])
+        )
+        then
+            if (not isArena and Unit(unitID):IsEnemy() and Unit(unitID):IsPlayer()) or (isArena and not Unit(unitID):InLOS() and (A.Zone == "arena" or A.Zone == "pvp")) then
                 local Disarm = A[A.PlayerSpec].Disarm
-                if  Disarm and 
+                if  Disarm and
                 (
                     (
-                        not isMsg and GetToggle(2, "DisarmPvP") ~= "OFF" and ((not isArena and Disarm:IsReady(unitID, nil, nil, skipShouldStop)) or (isArena and Disarm:IsReadyByPassCastGCD(unitID))) and                                 
+                        not isMsg and GetToggle(2, "DisarmPvP") ~= "OFF" and ((not isArena and Disarm:IsReady(unitID, nil, nil, skipShouldStop)) or (isArena and Disarm:IsReadyByPassCastGCD(unitID))) and
                         Unit(unitID):IsMelee() and (GetToggle(2, "DisarmPvP") == "ON COOLDOWN" or Unit(unitID):HasBuffs("DamageBuffs") > 8)
-                    ) or 
+                    ) or
                     (
                         isMsg and Disarm:IsReadyM(unitID)
                     )
-                ) and 
-                Disarm:AbsentImun(unitID, ImunBuffsCC, true) and 
-                Unit(unitID):IsControlAble("disarm") and 
-                Unit(unitID):InCC() == 0 and 
+                ) and
+                Disarm:AbsentImun(unitID, ImunBuffsCC, true) and
+                Unit(unitID):IsControlAble("disarm") and
+                Unit(unitID):InCC() == 0 and
                 Unit(unitID):HasDeBuffs("Disarmed") == 0
-                then 
-                    return true 
-                end 
-            end 
-        end 
-    end 
+                then
+                    return true
+                end
+            end
+        end
+    end
 end
 
 function A:CanInterruptPassive(unitID, countGCD)
-    if A.IsInPvP and (A.Zone == "arena" or A.Zone == "pvp") then         
-        if self.isPummel then 
+    if A.IsInPvP and (A.Zone == "arena" or A.Zone == "pvp") then
+        if self.isPummel then
             local useKick, _, _, notInterruptable = InterruptIsValid(unitID, "Heal", nil, countGCD)
-            if not useKick then 
+            if not useKick then
                 useKick, _, _, notInterruptable = InterruptIsValid(unitID, "PvP", nil, countGCD)
-            end 
-            if useKick and not notInterruptable and self:IsReadyByPassCastGCD(unitID) and self:AbsentImun(unitID, ImunBuffsInterrupt, true) then 
-                return true 
-            end 
-        end 
-        
-        if self.isStormBolt then 
+            end
+            if useKick and not notInterruptable and self:IsReadyByPassCastGCD(unitID) and self:AbsentImun(unitID, ImunBuffsInterrupt, true) then
+                return true
+            end
+        end
+
+        if self.isStormBolt then
             local StormBoltPvP = GetToggle(2, "StormBoltPvP")
-            if StormBoltPvP and StormBoltPvP ~= "OFF" and self:IsReadyByPassCastGCD(unitID) then 
-                local _, useCC, castRemainsTime 
-                if Toggle == "BOTH" then 
+            if StormBoltPvP and StormBoltPvP ~= "OFF" and self:IsReadyByPassCastGCD(unitID) then
+                local _, useCC, castRemainsTime
+                if Toggle == "BOTH" then
                     useCC, _, _, castRemainsTime = select(2, InterruptIsValid(unitID, "Heal", nil, countGCD))
-                    if not useCC then 
+                    if not useCC then
                         useCC, _, _, castRemainsTime = select(2, InterruptIsValid(unitID, "PvP", nil, countGCD))
-                    end 
-                else 
+                    end
+                else
                     useCC, _, _, castRemainsTime = select(2, InterruptIsValid(unitID, Toggle, nil, countGCD))
-                end 
-                if useCC and castRemainsTime >= GetLatency() and Unit(unitID):IsControlAble("stun") and not Unit(unitID):InLOS() and self:AbsentImun(unitID, ImunBuffsCC, true) then 
-                    return true 
-                end 
-            end 
-        end                     
-    end 
+                end
+                if useCC and castRemainsTime >= GetLatency() and Unit(unitID):IsControlAble("stun") and not Unit(unitID):InLOS() and self:AbsentImun(unitID, ImunBuffsCC, true) then
+                    return true
+                end
+            end
+        end
+    end
 end
 
