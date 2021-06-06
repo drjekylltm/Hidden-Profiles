@@ -1,42 +1,41 @@
----@diagnostic disable: undefined-global
 local _G, setmetatable, pairs, type, math = _G, setmetatable, pairs, type, math
-local huge = math.huge
+--local huge = math.huge
 local TMW = _G.TMW
 local Action = _G.Action
 local CONST = Action.Const
-local Listener = Action.Listener
+--local Listener = Action.Listener
 local Create = Action.Create
 local GetToggle = Action.GetToggle
-local GetLatency = Action.GetLatency
+--local GetLatency = Action.GetLatency
 local GetGCD = Action.GetGCD
 local GetCurrentGCD = Action.GetCurrentGCD
-local ShouldStop = Action.ShouldStop
+--local ShouldStop = Action.ShouldStop
 local BurstIsON = Action.BurstIsON
 local AuraIsValid = Action.AuraIsValid
 local InterruptIsValid = Action.InterruptIsValid
-local DetermineUsableObject = Action.DetermineUsableObject
-local Utils = Action.Utils
+--local DetermineUsableObject = Action.DetermineUsableObject
+--local Utils = Action.Utils
 local BossMods = Action.BossMods
 local TeamCache = Action.TeamCache
-local EnemyTeam = Action.EnemyTeam
-local FriendlyTeam = Action.FriendlyTeam
-local LoC = Action.LossOfControl
+--local EnemyTeam = Action.EnemyTeam
+--local FriendlyTeam = Action.FriendlyTeam
+--local LoC = Action.LossOfControl
 local Player = Action.Player
 local MultiUnits = Action.MultiUnits
 local ActiveUnitPlates = MultiUnits:GetActiveUnitPlates()
 local UnitCooldown = Action.UnitCooldown
 local Unit = Action.Unit
-local Covenant = _G.LibStub("Covenant")
+--local Covenant = _G.LibStub("Covenant")
 local IsUnitEnemy = Action.IsUnitEnemy
-local IsUnitFriendly = Action.IsUnitFriendly
-local Combat = Action.Combat
-local DisarmIsReady = Action.DisarmIsReady
+--local IsUnitFriendly = Action.IsUnitFriendly
+--local Combat = Action.Combat
+--local DisarmIsReady = Action.DisarmIsReady
 local LastPlayerCastID = Action.LastPlayerCastID
-local Azerite = LibStub("AzeriteTraits")
+--local Azerite = LibStub("AzeriteTraits")
 local ACTION_CONST_ROGUE_OUTLAW = CONST.ROGUE_OUTLAW
 local ACTION_CONST_AUTOTARGET = CONST.AUTOTARGET
-local ACTION_CONST_SPELLID_FREEZING_TRAP = CONST.SPELLID_FREEZING_TRAP
-local IsIndoors, UnitIsUnit = _G.IsIndoors, _G.UnitIsUnit
+--local ACTION_CONST_SPELLID_FREEZING_TRAP = CONST.SPELLID_FREEZING_TRAP
+--local IsIndoors, UnitIsUnit = _G.IsIndoors, _G.UnitIsUnit
 
 Action[ACTION_CONST_ROGUE_OUTLAW] = {
     -- Racial
@@ -60,8 +59,9 @@ Action[ACTION_CONST_ROGUE_OUTLAW] = {
     EveryManforHimself = Create({ Type = "Spell", ID = 59752}), -- usable in Action Core
     Regeneratin = Create({ Type = "Spell", ID = 291944}), -- not usable in APL but user can Queue it
     --Talents
-    QuickDraw = Create({ Type = "Spell", ID = 196938}),
-    -- general
+    QuickDraw = Create({ Type = "Spell", ID = 196938, isTalent = true }),
+    AcrobaticStrikes = Create({ Type = "Spell", ID = 196924, isTalent = true}),
+    --General
     Stealth = Create({ Type = "Spell", ID = 1784}),
     InstantPoison = Create({ Type = "Spell", ID = 315584}),
     CripplingPoison = Create({ Type = "Spell", ID = 3408}),
@@ -72,7 +72,7 @@ Action[ACTION_CONST_ROGUE_OUTLAW] = {
     PoolResource = Create({ Type = "Spell", ID = 97238,Hidden = true}),
     ShroudOfConcealment = Create({ Type = "Spell", ID = 114018}),
 	Sap = Create({ Type = "Spell", ID = 6770}),
-    -- CDS
+    --CDS
     AdrenalineRush = Create({ Type = "Spell", ID = 186286}),
     RollTheBones = Create({ Type = "Spell", ID = 315508}),
     --Covenants
@@ -121,7 +121,7 @@ Action[ACTION_CONST_ROGUE_OUTLAW] = {
     BlindGreen = Create({ Type = "SpellSingleColor",ID = 2094,Hidden = true,Color = "GREEN",QueueForbidden = true}),
     KidneyShotGreen = Create({ Type = "SpellSingleColor",ID = 408,Hidden = true,Color = "GREEN",QueueForbidden = true}),
     CheapShotGreen = Create({ Type = "SpellSingleColor",ID = 1833,Hidden = true,Color = "GREEN",QueueForbidden = true}),
-    -- Rotation
+    --Rotation
     Shiv = Create({ Type = "Spell", ID = 5938}),
     Ambush = Create({ Type = "Spell", ID = 8676}),
     CheapShot = Create({ Type = "Spell", ID = 1833}),
@@ -145,11 +145,11 @@ Action[ACTION_CONST_ROGUE_OUTLAW] = {
 	SmokeBombDebuff = Create({ Type = "Spell", ID = 212183}),
 	CheapTricks	= Create({ Type = "Spell", ID = 212035}),
 	DeathfromAbove = Create({ Type = "Spell", ID = 269513}),
-    -- Items
+    --Items
     PotionofUnbridledFury = Create({ Type = "Potion", ID = 169299}),
     BottledFlayedwingToxin = Create({ Type = "Trinket", ID = 178742,Hidden = true}),
     InscrutableQuantumDevice = Create({ Type = "Trinket", ID = 179350,Hidden = true}),
-    -- Gladiator Badges/Medallions
+    --Gladiator Badges/Medallions
     DreadGladiatorsMedallion = Create({ Type = "Trinket", ID = 161674}),
     DreadCombatantsInsignia = Create({ Type = "Trinket", ID = 161676}),
     DreadCombatantsMedallion = Create({ Type = "Trinket", ID = 161811,Hidden = true}), -- Game has something incorrect with displaying this
@@ -209,6 +209,36 @@ local DefensiveCasts = {
     [323195] = A.Feint, --Purifying Blast, SOA
     [333827] = A.Feint, --Seismic Stomp, ToP
 }
+
+--This table is used to identify targets that should not be swapped off if they are the current target.
+local KeepTarget	= {
+
+    [165913] = false, --Ghastly Parishioner --HOA
+    [170483] = false, --Atal'ai Deathwalker's Spirit --DOS
+    [165251] = false, --Illusionary Vulpin --Mists
+   --[31146] = false, -- Target dummy in Org for testing
+    [164567] = false, --Ingra Maloch -- Mists first boss
+    [164578] = false, --Stitchflesh's Creation --NW
+    [170927] = false, -- Erupting Ooze --PF
+    [164463] = false, --Paceran the Virulent --ToP
+    [164461] = false, --Sathel the Accursed --ToP
+    --[] = false, --
+    --[] = false, --
+    --[] = false, --
+    --[] = false, --
+}
+
+--This function checks the KeepTarget table for targets you should not swap off for any reason
+local function ValidAutotarget(nameplate)
+        -- @return boolean
+    local _, _, _, _, _, npc_id 		= Unit(nameplate):InfoGUID()
+    if KeepTarget[npc_id] == false then
+        return false
+    else
+        return true
+    end
+end
+
 local function boolnumber(value)
   return value and 1 or 0
 end
@@ -221,7 +251,12 @@ local function AntiFakeStun(unitID)
     A.StormBoltGreen:AbsentImun(unitID, Temp.TotalAndPhysAndCCAndStun, true)
 end
 
-
+local function TimeOnTarget()
+    --returns how many seconds player is from target if there is a target. IDK why *10 is needed, but it works
+    local _, min_range				= Unit("target"):GetRange()
+    local timefromtarget = ((min_range+5+3*boolnumber(A.AcrobaticStrikes:IsTalentLearned()))/(Unit("player"):GetCurrentSpeed()/100*7))
+    return timefromtarget
+end
 
 local function CastingCheck(unitIDcasting)
 	       --input string
@@ -326,9 +361,13 @@ end
 -- [3] Single Rotation
 A[3] = function(icon)
 	-- stop rotation if stolen shademount
+
 	if Unit(player):HasBuffs(A.StolenShadehound.ID) ~= 0 then return end
 	-- if in Necrotic Wake instance and targetting Companion, stop rotation to allow for covenant Buff cast to finish (stealth breaks cast)
-	if A.InstanceInfo.ID == 2286 and Unit("target"):Name() == "Farra" then return end
+	local _, _, _, _, _, npc_id 		= Unit("target"):InfoGUID() --@number npcID from wowhead/evlui, better than using strings for other languages
+
+
+    if A.InstanceInfo.ID == 2286 and Unit("target"):Name() == "Farra" then return end
     -- Stop rotation on Torghast Containers
 	if Unit("target"):Name() == "Ashen Phylactery" then return end
 	--164698 or 167986 or 165533 or 165523 or 170525 or 167987 or 178523 or 179514 or
@@ -344,7 +383,6 @@ A[3] = function(icon)
         --Stop Rotation if Vanish is set to off
         if Unit(player):HasBuffs(A.Vanish.ID) ~= 0 and GetToggle(2, "VanishSetting") == 0 then return end
         if IsMounted() then return end
-
         local isBurst = BurstIsON(unitID) -- @boolean
 
         --testing
@@ -365,7 +403,7 @@ A[3] = function(icon)
             return A.Shiv:Show(icon)
         end
         --Spiteful Shade
-        if Unit(unitID):Name() == "Spiteful Shade" and Unit(unitID):HasDeBuffs({"Stuned", "Disoriented", "PhysStuned"}) == 0 then
+        if npc_id == 174773 and Unit(unitID):HasDeBuffs({"Stuned", "Disoriented", "PhysStuned"}) == 0 then
             --Evasion tank
             if Unit("targettarget"):Name() == Unit(player):Name() and A.Shiv:IsInRange(unitID) and A.Evasion:IsReady(player) then
                 return A.Evasion:Show(icon)
@@ -387,7 +425,7 @@ A[3] = function(icon)
 	local function MFDSnipe()
 			if MultiUnits:GetByRange(15) >= 2 and Player:ComboPointsDeficit() >= 4 and Unit("player"):CombatTime() > 0 and GetCurrentGCD() ~= 0 then
 				for val in pairs(ActiveUnitPlates) do
-					if 	A.MarkedForDeath:IsReady(unitID) and Unit(val):TimeToDie() < Unit(unitID):TimeToDie() and
+					if 	A.MarkedForDeath:IsReady(unitID) and Unit(val):TimeToDie() < Unit(unitID):TimeToDie() and ValidAutotarget(val) and
 						((UnitCanAttack("player", val) and Unit(val):GetRange() <=15 and UnitThreatSituation("player", val) ~= nil and not Unit(val):IsTotem())	or Unit(val):IsDummy()) then
 							return A:Show(icon, ACTION_CONST_AUTOTARGET)
 					end
@@ -419,7 +457,7 @@ A[3] = function(icon)
             return count
         end
 
-local function Interrupts()
+        local function Interrupts()
 	    local unitIDinterrupt = "none"
 			if IsUnitEnemy("mouseover") then
 				unitIDinterrupt = "mouseover"
@@ -467,7 +505,7 @@ local function Interrupts()
                 useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(val)
             end
 
-					if Unit(val):HasBuffs(A.Inspired.ID) == 0
+					if Unit(val):HasBuffs(A.Inspired.ID) == 0 and ValidAutotarget(val)
 					and ((UnitCanAttack("player", val) and Unit(val):GetRange() <=8  and not Unit(val):IsTotem())	or Unit(val):IsDummy()) -- and UnitThreatSituation("player", val) ~= nil
 					and  ((useKick and castLeft > 0 and not notKickAble  and A.AbsentImun(nil, val, Temp.TotalAndPhysKick) and A.Kick:IsReady(val))
                     or (useCC and (Player:GetStance() ~= 0) and A.CheapShot:IsReady(val) and A.CheapShot:AbsentImun(val, Temp.TotalAndPhysAndCC) and Unit(val):GetDR("stun") > 0 and not Unit(val):IsBoss() and Unit(val):HasBuffs(A.Sanguine.ID) == 0)
@@ -559,23 +597,26 @@ local function Interrupts()
         end
 
         local function Opener()
+
             if A.MarkedForDeath:IsReady(unitID)
-            and ((not GetToggle(1, "BossMods") and A.PistolShot:IsInRange(unitID)) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 7))
+            and ((not GetToggle(1, "BossMods") and TimeOnTarget() <= 2.4  ) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 7*GetGCD()))
 			and not Unit(unitID):IsTotem() and Player:ComboPointsDeficit() >=4 + boolnumber(A.DeeperStratagem:IsTalentLearned())
             then
                 return A.MarkedForDeath:Show(icon)
             end
 
             if A.SliceAndDice:IsReady(unitID, true) and Unit(player):HasBuffs(A.SliceAndDice.ID) <= 9 and Player:ComboPoints() >= 5
-            and (not GetToggle(1, "BossMods") or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 3))
+            and ((not GetToggle(1, "BossMods") and TimeOnTarget() <= 2 ) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 3))
             then
                 return A.SliceAndDice:Show(icon)
             end
             if CheckBuffCountRB() <= 1 and A.RollTheBones:IsReady(unitID, true) and (CheckBuffCountRB() == 0 or (Unit(player):HasBuffs(A.BuriedTreasure.ID) ~= 0 or Unit(player):HasBuffs(A.GrandMelee.ID) ~= 0 or Unit(player):HasBuffs(A.RuthlessPrecision.ID) ~= 0 or Unit(player):HasBuffs(A.SkullandCrossbones.ID) ~= 0))
-            and ((not GetToggle(1, "BossMods") and A.Shiv:IsInRange(unitID)) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 1.8)) then
+            and ((not GetToggle(1, "BossMods") and TimeOnTarget() <= 2.1+1*boolnumber(A.MarkedForDeath:IsTalentLearned()))
+                 or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 1.8))
+                then
                 return A.RollTheBones:Show(icon)
             end
-			if Player:ComboPointsDeficit() < 2 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1)  and GetCurrentGCD() == 0 and (not GetToggle(1, "BossMods") or Unit(player):CombatTime() > 0) then
+			if Player:ComboPointsDeficit() < 2 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1)  and GetCurrentGCD() == 0 and A.Shiv:IsInRange() and (not GetToggle(1, "BossMods") or Unit(player):CombatTime() > 0) then
 				if A.BetweenTheEyes:IsReady(unitID) then
 					return A.BetweenTheEyes:Show(icon)
 				end
@@ -787,8 +828,8 @@ local function Interrupts()
 			if A.KillingSpree:IsReady(unitID) and Player:EnergyTimeToMax() >= 2.5 and ((MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0) or MultiUnits:GetByRange(8) <= 1) and not A.MarkoftheMasterAssassin:HasLegendaryCraftingPower() then
                 return A.KillingSpree:Show(icon)
             end
-
-            if A.BladeRush:IsReady(unitID) and Unit(player):HasBuffs(A.Stealth.ID) == 0 and Unit(unitID):Name() ~= "Spiteful Shade"
+            --Do not bladerush SpitefulShades
+            if A.BladeRush:IsReady(unitID) and Unit(player):HasBuffs(A.Stealth.ID) == 0 and npc_id ~= 174773
 
 			and (MultiUnits:GetByRange(8) <= 1 or (MultiUnits:GetByRange(8) >= 2 and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0))
 
@@ -812,11 +853,11 @@ local function Interrupts()
 						end
 				end
 		end
-        
+
 		   --SBS
         if A.SerratedBoneSpike:IsReady(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.Stealth.ID) == 0
 			and
-			((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1) <= Player:ComboPointsDeficit())
+			((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1) <= Player:ComboPointsDeficit()) -- CP to be generated is less than the deficit
 			or
 			((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1)) >= 3+boolnumber(A.DeeperStratagem:IsTalentLearned()) and Player:ComboPointsDeficit() >=3+boolnumber(A.DeeperStratagem:IsTalentLearned())))
 			and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) --not SL dummies :( -- player is on the threat table somewhere (in combat with)
@@ -835,7 +876,7 @@ local function Interrupts()
             --Bone Spike Targeting
                 if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 and Action.GetToggle(1, "AutoTarget") and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15) and not CastingCheck(unitID) then
                     for val in pairs(ActiveUnitPlates) do
-                        if 	(Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and Unit(val):TimeToDie() > 1 and MultiUnits:GetByRange(15) >= 2)
+                        if 	(Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and Unit(val):TimeToDie() > 1 and MultiUnits:GetByRange(15) >= 2 and ValidAutotarget(val))
                             and
                             (( UnitCanAttack("player", val) and Unit(val):GetRange() <=15  and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) then
                                 return A:Show(icon, ACTION_CONST_AUTOTARGET)
@@ -917,7 +958,7 @@ local function Interrupts()
  --Bone Spike Targeting
      if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 and Action.GetToggle(1, "AutoTarget") and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15) and not CastingCheck(unitID) then
          for val in pairs(ActiveUnitPlates) do
-             if 	(Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and Unit(val):TimeToDie() > 1 and MultiUnits:GetByRange(15) >= 2)
+             if 	(Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and Unit(val):TimeToDie() > 1 and MultiUnits:GetByRange(15) >= 2 and ValidAutotarget(val))
                  and
                  (( UnitCanAttack("player", val) and Unit(val):GetRange() <=15  and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) then
                      return A:Show(icon, ACTION_CONST_AUTOTARGET)
@@ -925,11 +966,6 @@ local function Interrupts()
          end
      end
 end
-
-
-
-
-
 
             -- there are rumors that Triple Threat Conduit may make PistolShot with Opportunity obselete, this will check if that conduit is active if needed in the future (C_Soulbinds.IsConduitInstalledInSoulbind(C_Soulbinds.GetActiveSoulbindID(), 241)) --@boolean
 			-- if Opportunity, PS for 1 CP +broadside+quickdraw
@@ -947,9 +983,7 @@ end
             end
         end
 
-
-
-		--Master Assassian Rotation during MA
+        --Master Assassian Rotation during MA
         if A.MarkoftheMasterAssassin:HasLegendaryCraftingPower() and A.KillingSpree:IsTalentLearned() and A.Vanish:GetCooldown() >= 103 and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) ~= 0 and MasterAss() then
 			return true
 		end
