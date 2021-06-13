@@ -180,6 +180,7 @@ local Temp = {
     end
 end
 
+--This table is used to identify Target casts should be feinted in the last 4 seconds. 
 local DefensiveCasts = {
     [330423] = A.Feint, --Fungistorm, PF, Trash
     [325360] = A.Feint, --Rite of Supremacy, SD, Third Boss
@@ -195,12 +196,96 @@ local DefensiveCasts = {
     [324527] = A.Feint, --Plaguestomp, PF
     [323195] = A.Feint, --Purifying Blast, SOA
     [333827] = A.Feint, --Seismic Stomp, ToP
+    [322232] = A.Feint, --Infectious Rain, PF
+    [322486] = A.CloakofShadows, --Overgrowth, Mists
+}
+--This table is used to identify targets that should not be swapped to if their nameplate is on screen.
+local KeepTarget	= {
+    [165913] = false, --Ghastly Parishioner --HOA
+    [170483] = false, --Atal'ai Deathwalker's Spirit --DOS
+    [165251] = false, --Illusionary Vulpin --Mists
+    [164567] = false, --Ingra Maloch --Mists first boss
+    [164578] = false, --Stitchflesh's Creation --NW
+    [170927] = false, -- Erupting Ooze --PF
+    [164463] = false, --Paceran the Virulent --ToP
+    [164461] = false, --Sathel the Accursed --ToP
+    [174175] = false, --Loyal Stoneborn --HOA
+    [334757] = false, --Shades of Bargast --Castle Nathria
+    --[] = false, --
+    --[] = false, --
+    --[] = false, --
+    --[] = false, --
+    --[] = false, --
+    --[] = false, --
+    --[] = false, --
+    --[] = false, --
+    --[31146] = false, -- Target dummy in Org for testing
 }
 
+--this table is used to identify casts that are a cast followed by a channel and we only want to interrupt the channel
+local Channels = {
+    --[328177] = true, --Fungistorm, PF, Trash --after testing i dont believe Fungistorm is recast if stopped before channel
+    --[330423] = true, --Fungistorm, PF, Trash
+    --[328176] = true, --Fungistorm, PF, Trash
+    --[330422] = true, --Fungistorm, PF, Trash
+    --[340481] = true, --Fungistorm, PF, Trash
+    --[340633] = true, --Fungistorm, PF, Trash
+    [336451] = true, --Bulwark of Maldraxxus, PF, Trash
+    [336449] = true, --Bulwark of Maldraxxus, PF, Trash
+    [331718] = true, --Spear Flurry --Mists
+    [331743] = true, --Bucking Rampage --Mists
+    [332671] = true, --Bladestorm --DoS
+    [330810] = true, --Bind Soul -- TOP
+
+}
 
 local function boolnumber(value)
   return value and 1 or 0
 end
+
+
+function Action:IsLatenced(delay)
+    -- @return boolean
+    return TMW.time - (Temp.CastStartTime[self:Info()] or 0) > (delay or 0.1)
+end
+
+local function InscrutableQuantumDeviceCheck()
+    --@boolean true - Trinket will DPS or give stat buff, false - Trinket will heal or restore mana
+    for GUIDs, v in pairs(TeamCache.Friendly.GUIDs) do
+        if Unit(v):HealthPercent() <= 30 then
+            return false
+        end
+        if Unit(v):PowerType() == "MANA" then
+            if Unit(v):PowerPercent() <= 20 then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+
+
+-- Use Items (function call includes stealth prevention)
+local function UseItems(unitID)
+    if A.Trinket1:IsReady(unitID) and Unit(player):HasBuffs(A.Stealth.ID) == 0 and A.Trinket1:GetItemCategory() ~= "DEFF" and not Temp.IsSlotTrinketBlocked[A.Trinket1.ID] and A.Trinket1:AbsentImun(unitID, Temp.TotalAndMagPhys) then
+        return A.Trinket1
+    end
+    if A.Trinket2:IsReady(unitID) and Unit(player):HasBuffs(A.Stealth.ID) == 0 and A.Trinket2:GetItemCategory() ~= "DEFF" and not Temp.IsSlotTrinketBlocked[A.Trinket2.ID] and A.Trinket2:AbsentImun(unitID, Temp.TotalAndMagPhys) then
+        return A.Trinket2
+    end
+    -- use BottledFlayedwingToxin if Brez'd or Buff drops in fight
+    if A.BottledFlayedwingToxin:IsReady(unitID, true) and Unit(player):HasBuffs(A.FlayedwingToxin.ID) == 0 then
+        return A.BottledFlayedwingToxin
+    end
+    if A.InscrutableQuantumDevice:IsReady(unitID) and InscrutableQuantumDeviceCheck() then
+        return A.InscrutableQuantumDevice
+    end
+end
+
+
+
+
 
 -- [1] CC AntiFake Rotation
 local function AntiFakeStun(unitID)
@@ -253,42 +338,8 @@ A[2] = function(icon)
     end
 end
 
-function Action:IsLatenced(delay)
-    -- @return boolean
-    return TMW.time - (Temp.CastStartTime[self:Info()] or 0) > (delay or 0.1)
-end
 
-local function InscrutableQuantumDeviceCheck()
-    --@boolean true - Trinket will DPS or give stat buff, false - Trinket will heal or restore mana
-    for GUIDs, v in pairs(TeamCache.Friendly.GUIDs) do
-        if Unit(v):HealthPercent() <= 30 then
-            return false
-        end
-        if Unit(v):PowerType() == "MANA" then
-            if Unit(v):PowerPercent() <= 20 then
-                return false
-            end
-        end
-    end
-    return true
-end
 
--- Use Items (function call includes stealth prevention)
-local function UseItems(unitID)
-    if A.Trinket1:IsReady(unitID) and Unit(player):HasBuffs(A.Stealth.ID) == 0 and A.Trinket1:GetItemCategory() ~= "DEFF" and not Temp.IsSlotTrinketBlocked[A.Trinket1.ID] and A.Trinket1:AbsentImun(unitID, Temp.TotalAndMagPhys) then
-        return A.Trinket1
-    end
-    if A.Trinket2:IsReady(unitID) and Unit(player):HasBuffs(A.Stealth.ID) == 0 and A.Trinket2:GetItemCategory() ~= "DEFF" and not Temp.IsSlotTrinketBlocked[A.Trinket2.ID] and A.Trinket2:AbsentImun(unitID, Temp.TotalAndMagPhys) then
-        return A.Trinket2
-    end
-    -- use BottledFlayedwingToxin if Brez'd or Buff drops in fight
-    if A.BottledFlayedwingToxin:IsReady(unitID, true) and Unit(player):HasBuffs(A.FlayedwingToxin.ID) == 0 then
-        return A.BottledFlayedwingToxin
-    end
-    if A.InscrutableQuantumDevice:IsReady(unitID) and InscrutableQuantumDeviceCheck() then
-        return A.InscrutableQuantumDevice
-    end
-end
 
 
 
@@ -350,7 +401,65 @@ A[3] = function(icon)
             return A.ArcaneTorrent:Show(icon)
         end
 
-	local function MFDSnipe()
+------------------------------------------
+--Function Definitions                  --
+------------------------------------------
+
+        local function BoneSpike()
+            if A.SerratedBoneSpike:IsReady(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.Stealth.ID) == 0
+                and
+                ((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 <= Player:ComboPointsDeficit()) -- CP to be generated is less than the deficit
+                or
+                ((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1) >= 4+boolnumber(A.DeeperStratagem:IsTalentLearned()) and Player:ComboPointsDeficit() >=4+boolnumber(A.DeeperStratagem:IsTalentLearned())))
+                and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) --not SL dummies :( -- player is on the threat table somewhere (in combat with)
+                then
+            --Bonepsike target missing buff
+                    if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and not UnitCooldown:IsSpellInFly("player", A.SerratedBoneSpike.ID) then
+                        return A.SerratedBoneSpike:Show(icon)
+                    end
+                --all targets have bonespike or autotarget is off
+                    if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) >= MultiUnits:GetByRange(15) or not Action.GetToggle(1, "AutoTarget") then
+                        if (Unit(unitID):TimeToDie() >= A.SerratedBoneSpike:GetSpellChargesFullRechargeTime() - 30 * Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)) or IsInRaid() then
+                            return A.SerratedBoneSpike:Show(icon)
+                            end
+                    end
+                --Bone Spike Targeting
+                    if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 and Action.GetToggle(1, "AutoTarget") and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15) then
+                        for val in pairs(ActiveUnitPlates) do
+                            if 	(Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and Unit(val):TimeToDie() > 1 and MultiUnits:GetByRange(15) >= 2 and ValidAutotarget(val))
+                                and
+                                (( UnitCanAttack("player", val) and Unit(val):GetRange() <=15  and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) then
+                                    return A:Show(icon, ACTION_CONST_AUTOTARGET)
+                            end
+                        end
+                    end
+            end
+
+        end
+local function SubterfugeGarrote()
+--With  Subterfuge you want to use all globals during it to apply  Garrote to as many targets as possible.
+			--Garrote Targeting
+			if Unit(player):HasBuffs(A.Subterfugebuff.ID) ~= 0 and A.Garrote:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.Garrote.ID, true) ~= 0 and Unit(player):CombatTime() > 0 and Player:GetDeBuffsUnitCount(A.Garrote.ID) < MultiUnits:GetByRange(5) and Player:ComboPointsDeficit() >= 1  and GetCurrentGCD() ~= 0
+			then
+				for val in pairs(ActiveUnitPlates) do
+					if 	(Unit(val):HasDeBuffs(A.Garrote.ID, true) == 0 and Unit(val):TimeToDie() > 12 and A.Shiv:IsInRange(val))
+						and
+						(( UnitCanAttack("player", val) and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) then
+
+							return
+
+							A:Show(icon, ACTION_CONST_AUTOTARGET)
+					end
+				end
+			end
+			--todo Garrote Snapshotting
+
+            if A.Garrote:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Garrote.ID, true) <= 5.4 and Unit(unitID):TimeToDie() > 12 then
+                return A.Garrote:Show(icon)
+            end
+        end
+
+	    local function MFDSnipe()
 
 			if MultiUnits:GetByRange(15) >= 2 and Player:ComboPointsDeficit() >= 4 and Unit("player"):CombatTime() > 0 and GetCurrentGCD() ~= 0 then
 				for val in pairs(ActiveUnitPlates) do
@@ -362,9 +471,19 @@ A[3] = function(icon)
 				end
 			end
 		end
+        local function MFD()
+            --function is called from StealthCD, CDs, ST
+			--MfD Snipping
+			if A.MarkedForDeath:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and MFDSnipe() then
+				return true
+			end
+            --Use MFD
+            if A.MarkedForDeath:IsReady(unitID) and Player:ComboPointsDeficit() >=4 + boolnumber(A.DeeperStratagem:IsTalentLearned()) and (not GetToggle(1, "BossMods") or Unit(player):CombatTime() > 0) and not Unit(unitID):IsTotem() then
+                return A.MarkedForDeath:Show(icon)
+            end
+        end
 
-
-local function Interrupts()
+        local function Interrupts()
 	    local unitIDinterrupt = "none"
 			if IsUnitEnemy("mouseover") then
 				unitIDinterrupt = "mouseover"
@@ -534,13 +653,9 @@ local function Interrupts()
         end
 
         local function StealthCDs()
- 			--MfD Snipping
-			if A.MarkedForDeath:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and MFDSnipe() then
-				return true
-			end
-			--casting MFD after finding snipping target
-            if A.MarkedForDeath:IsReady(unitID) and Player:ComboPointsDeficit() >=4 and not Unit(unitID):IsTotem() then
-                return A.MarkedForDeath:Show(icon)
+		    --MFD (also in CDs)
+            if MFD()
+                then return true
             end
 			--reopen based on talent
 
@@ -575,36 +690,6 @@ local function Interrupts()
                 return Item:Show(icon)
             end
 
-
-
-			--With  Subterfuge you want to use all globals during it to apply  Garrote to as many targets as possible.
-			--Garrote Targeting
-			if Unit(player):HasBuffs(A.Subterfugebuff.ID) ~= 0 and A.Garrote:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.Garrote.ID, true) ~= 0 and Unit(player):CombatTime() > 0 and Player:GetDeBuffsUnitCount(A.Garrote.ID) < MultiUnits:GetByRange(5) and Player:ComboPointsDeficit() >= 1  and GetCurrentGCD() ~= 0
-			then
-				for val in pairs(ActiveUnitPlates) do
-					if 	(Unit(val):HasDeBuffs(A.Garrote.ID, true) == 0 and Unit(val):TimeToDie() > 12 and A.Shiv:IsInRange(val))
-						and
-						(( UnitCanAttack("player", val) and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) then
-
-							return
-
-							A:Show(icon, ACTION_CONST_AUTOTARGET)
-					end
-				end
-			end
-			--todo Garrote Snapshotting
-
-            if A.Garrote:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Garrote.ID, true) <= 5.4 and Unit(unitID):TimeToDie() > 12 then
-                return A.Garrote:Show(icon)
-            end
-
-
-
-
-
-
-
-
 			-- apply inital SnD
 			if A.SliceAndDice:IsReady(unitID, true) and Unit(player):HasBuffs(A.SliceAndDice.ID) < 3 and Unit(player):CombatTime() <= 10 then
 				return A.SliceAndDice:Show(icon)
@@ -618,55 +703,15 @@ local function Interrupts()
             if A.EchoingReprimand:IsReady(unitID) and (EightYardTTD > 4 or Unit(unitID):IsBoss()) and Player:ComboPointsDeficit() >= 2 then
 				return A.EchoingReprimand:Show(icon)
             end
-		   
-           
-           
-           
-           
-            --SBS
-            if A.SerratedBoneSpike:IsReady(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.Stealth.ID) == 0
-			and
-			(((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 ) <= Player:ComboPointsDeficit())
-			or
-			(((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 )) >= 3+boolnumber(A.DeeperStratagem:IsTalentLearned()) and Player:ComboPointsDeficit() >=3+boolnumber(A.DeeperStratagem:IsTalentLearned())))
-			and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) --not SL dummies :( -- player is on the threat table somewhere (in combat with)
-			then
-		   --Bonepsike target missing buff
-            if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and not UnitCooldown:IsSpellInFly("player", A.SerratedBoneSpike.ID) then
-                return A.SerratedBoneSpike:Show(icon)
+	
+		   --SBS (also in ST as builder)
+            if BoneSpike()
+                then return true
             end
-			--all targets have bonespike or autotarget is off
-            if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) >= MultiUnits:GetByRange(15) or not Action.GetToggle(1, "AutoTarget") then
-                if (Unit(unitID):TimeToDie() >= A.SerratedBoneSpike:GetSpellChargesFullRechargeTime() - 30 * Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)) or IsInRaid() then
-                    return A.SerratedBoneSpike:Show(icon)
-                end
+		   --MFD (also in CDs)
+            if MFD()
+            then return true
             end
-			--Bone Spike Targeting
-            if A.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15)
-            then
-                for val in pairs(ActiveUnitPlates) do
-                    if 	(Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and Unit(val):TimeToDie() > 1 and MultiUnits:GetByRange(15) >= 2)
-                        and
-                        (( UnitCanAttack("player", val) and Unit(val):GetRange() <=15  and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) then
-    
-                            return A:Show(icon, ACTION_CONST_AUTOTARGET)
-                    end
-                end
-            end
-			end
-
-
-			--MfD Snipping
-			if A.MarkedForDeath:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and MFDSnipe() then
-				return true
-			end
-            --MfD is also in ST() it is a CD that resets on death and is used with burst off as well
-            if A.MarkedForDeath:IsReady(unitID) and Player:ComboPointsDeficit() >=4 and (not GetToggle(1, "BossMods") or Unit(player):CombatTime() > 0) and not Unit(unitID):IsTotem() then
-                return A.MarkedForDeath:Show(icon)
-            end
-
-
-
 
 			--todo improve opener logic, a hard timer sucks probably
 			if A.Vendetta:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Vendetta.ID, true) == 0 and Unit(unitID):TimeToDie() > 10 and
@@ -679,7 +724,7 @@ local function Interrupts()
 			then
 				return A.Vendetta:Show(icon)
 			end
-
+            
 			-- Use Vanish if setting is set to Auto
 			if A.Vanish:IsReady(player) and GetToggle(2, "VanishSetting") == 2 and A.Shiv:IsInRange(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) == 0
 			then
@@ -712,11 +757,6 @@ local function Interrupts()
 				return A.Exsanguinate:Show(icon)
 			end
 
-
-
-
-
-
 		    if A.Fireblood:IsReady(unitID, true) and A.Shiv:IsInRange(unitID) and Player:Energy() < 44 then
                 return A.Fireblood:Show(icon)
             end
@@ -735,9 +775,6 @@ local function Interrupts()
             if A.AncestralCall:IsReady(player) and A.Shiv:IsInRange(unitID) and Player:Energy() <44 then
                 return A.AncestralCall:Show(icon)
             end
-
-
-
 		end
 
 		local function Finishers()
@@ -787,35 +824,13 @@ local function Interrupts()
 
         local function ST()
 
-            --With  Subterfuge you want to use all globals during it to apply  Garrote to as many targets as possible.
-			--Garrote Targeting
-			if Unit(player):HasBuffs(A.Subterfugebuff.ID) ~= 0 and A.Garrote:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.Garrote.ID, true) ~= 0 and Unit(player):CombatTime() > 0 and Player:GetDeBuffsUnitCount(A.Garrote.ID) < MultiUnits:GetByRange(5) and Player:ComboPointsDeficit() >= 1  and GetCurrentGCD() ~= 0
-			then
-				for val in pairs(ActiveUnitPlates) do
-					if 	(Unit(val):HasDeBuffs(A.Garrote.ID, true) == 0 and Unit(val):TimeToDie() > 12 and A.Shiv:IsInRange(val))
-						and
-						(( UnitCanAttack("player", val) and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) then
+            
 
-							return
-
-							A:Show(icon, ACTION_CONST_AUTOTARGET)
-					end
-				end
-			end
-			--todo Garrote Snapshotting
-
-            if A.Garrote:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Garrote.ID, true) <= 5.4 and Unit(unitID):TimeToDie() > 12 then
-                return A.Garrote:Show(icon)
+		   --MFD (also in CDs)
+            if MFD()
+                then return true
             end
 
-			--MfD Snipping
-			if A.MarkedForDeath:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and MFDSnipe() then
-				return true
-			end
-            --MfD is a CD that resets if the target dies, no need to hold based on Burst setting, Can not be used on Totems
-            if A.MarkedForDeath:IsReady(unitID) and not isBurst and Player:ComboPointsDeficit() >=4 and(not GetToggle(1, "BossMods") or Unit(player):CombatTime() > 0) and not Unit(unitID):IsTotem() then
-                return A.MarkedForDeath:Show(icon)
-            end
             --Use Spesis Stealth buff on Ambush, Pool energy for Ambush
             if Unit(player):HasBuffs(A.SepsisStealth.ID) ~= 0 and A.Ambush:IsInRange(unitID) and Player:ComboPointsDeficit() >= 1 then
                 if A.Ambush:IsReadyByPassCastGCD(unitID) then
@@ -826,40 +841,15 @@ local function Interrupts()
                     return A.PoolResource:Show(icon)
                 end
             end
+			            
+            
+            --Builders
+		    --SBS (also in CD)
+            if BoneSpike()
+                then return true
+            end
 
-            --SBS
-            if A.SerratedBoneSpike:IsReady(unitID) and Unit(player):CombatTime() > 0 and Unit(player):HasBuffs(A.Stealth.ID) == 0
-			and
-			(((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 ) <= Player:ComboPointsDeficit())
-			or
-			(((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 )) >= 3+boolnumber(A.DeeperStratagem:IsTalentLearned()) and Player:ComboPointsDeficit() >=3+boolnumber(A.DeeperStratagem:IsTalentLearned())))
-			and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) --not SL dummies :( -- player is on the threat table somewhere (in combat with)
-			then
-		   --Bonepsike target missing buff
-            if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and not UnitCooldown:IsSpellInFly("player", A.SerratedBoneSpike.ID) then
-                return A.SerratedBoneSpike:Show(icon)
-            end
-			--all targets have bonespike or autotarget is off
-            if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) >= MultiUnits:GetByRange(15) or not Action.GetToggle(1, "AutoTarget") then
-                if (Unit(unitID):TimeToDie() >= A.SerratedBoneSpike:GetSpellChargesFullRechargeTime() - 30 * Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)) or IsInRaid() then
-                    return A.SerratedBoneSpike:Show(icon)
-                end
-            end
-			--Bone Spike Targeting
-            if A.GetToggle(1, "AutoTarget") and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15)
-            then
-                for val in pairs(ActiveUnitPlates) do
-                    if 	(Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and Unit(val):TimeToDie() > 1 and MultiUnits:GetByRange(15) >= 2)
-                        and
-                        (( UnitCanAttack("player", val) and Unit(val):GetRange() <=15  and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) then
-    
-                            return A:Show(icon, ACTION_CONST_AUTOTARGET)
-                    end
-                end
-            end
-			end
 
-			--Builders
 
 			--Keep up  Garrote on as many targets as possible.
 			--Garrote Targeting
@@ -877,7 +867,6 @@ local function Interrupts()
 				end
 			end
 			--todo Garrote Snapshotting
-
             if A.Garrote:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Garrote.ID, true) <= 5.4 and Unit(unitID):TimeToDie() > 12 then
                 return A.Garrote:Show(icon)
             end
@@ -899,10 +888,13 @@ local function Interrupts()
                 return A.PoisonedKnife:Show(icon)
             end
         end
+------------------------------------------
+--Functional Rotation Calls             --
+------------------------------------------
 
 
 
-		--INTERRUPTS
+        --INTERRUPTS
         if Interrupts() then
             return true
         end
@@ -914,7 +906,7 @@ local function Interrupts()
         if Opener() and Unit(player):HasBuffs(A.Stealth.ID) ~= 0 and GetToggle(2, "Opener") ~= "OFF" then
             return true
         end
-        --StealthCDs
+           --StealthCDs
         if isBurst
 
         --TODO: review "or" here : the intent is for vanish to allow for in combat stealth CDs (RtB, MfD, and Ambush) but if vanish lasts so long you gain the stealth buff, we will just reopen instead which will also use stealth abilities based on user Opener Settings
@@ -922,6 +914,14 @@ local function Interrupts()
 				and StealthCDs() then
             return true
         end
+
+        if Unit(player):HasBuffs(A.Subterfugebuff.ID) ~= 0 and SubterfugeGarrote() then
+            return true
+        end
+
+
+
+
         if Unit(player):HasBuffs(A.Stealth.ID) == 0 then
             -- CDs
             if CDs() and isBurst then
@@ -941,6 +941,9 @@ local function Interrupts()
             end
         end
     end
+------------------------------------------
+--OOC Actions                         --
+------------------------------------------
 
     --Use BottledFlayedwingToxin if out of combat with other poisons. before stealth
     if A.BottledFlayedwingToxin:IsReady(unitID, true) and Unit(player):HasBuffs(A.FlayedwingToxin.ID) == 0 and Player:GetStance() == 0 and Unit(player):CombatTime() == 0 and not IsMounted() then

@@ -105,9 +105,9 @@ Factory[4].RyanInterrupts = StdUi:tGenerateMinMax({
             [321807] = { useKick = false, useCC = true, useRacial = true    }, --Boneflay;             		CC
 		
             --Plaguefall
-            [328177] = { useKick = false, useCC = true, useRacial = true    }, --Fungistorm;                CC                                   
+            [328177] = { useKick = false, useCC = true, useRacial = true,   }, --Fungistorm;                CC                                   
             [319070] = { useKick = true, useCC = false, useRacial = false   }, --Corrosive Gunk;            Kick            
-            [336451] = { useKick = false, useCC = true, useRacial = true    }, --Bulwark of Maldraxxus;     CC            
+            [336451] = { useKick = false, useCC = true, useRacial = true,   }, --Bulwark of Maldraxxus;     CC            
             [328400] = { useKick = false, useCC = true, useRacial = true    }, --Stealthlings;             	CC 
             [328180] = { useKick = true, useCC = true, useRacial = true     }, --Gripping Infection; 		Kick+CC
             [321999] = { useKick = true, useCC = false, useRacial = false   }, --Viral Globs;            	Kick
@@ -115,6 +115,9 @@ Factory[4].RyanInterrupts = StdUi:tGenerateMinMax({
             [328094] = { useKick = true, useCC = false, useRacial = false   }, --Pestilence Bolt;           Kick 	
             [329239] = { useKick = true, useCC = false, useRacial = false   }, --Creepy Crawlers;           Kick 
             [321935] = { useKick = false, useCC = true, useRacial = true    }, --Withering Filth;          	CC  
+            [328016] = { useKick = true, useCC = true, useRacial = true     }, -- Kick+CC--Wonder Grow
+            [327995] = { useKick = true, useCC = true, useRacial = true     }, -- Kick+CC--Doomshroom
+
 			
             --Sanguine Depths
             [319654] = { useKick = true, useCC = false, useRacial = false   }, --Hungering Drain;           Kick
