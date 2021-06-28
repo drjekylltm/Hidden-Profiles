@@ -184,11 +184,9 @@ local SliderMarginOptions = { margin = { top = 10 } }
 local LayoutConfigOptions = { gutter = 6, padding = { left = 5, right = 5 } }
 A.Data.ProfileEnabled[A.CurrentProfile]             = true
 A.Data.ProfileUI                                     = {
-    DateTime = "v10.0.1 (7.6.2021) #Time On Target",
+    DateTime = "v10.2 (29.6.2021) #9.1 QoL",
     [2] = {
         [ACTION_CONST_ROGUE_SUBTLETY] = {
-
-
             LayoutOptions = LayoutConfigOptions,
             {
                 {
@@ -756,9 +754,14 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
 			    {
-                    E                 = "Checkbox",
+                    E = "Dropdown",
+                    OT = {
+                        { text = "Always", value = 2 },
+                        { text = "Once", value = 1 },
+                        { text = "Never", value = 0 },
+                    },
                     DB                 = "REBTE",
-                    DBV             = false,
+                    DBV             = 0,
                     L                 = L.REBTE,
                     TT                 = L.REBTETT,
                     M                 = {},
