@@ -367,7 +367,7 @@ A[3] = function(icon)
         if UnitCanAttack(player, unitID) == false then return end --Stop Rotation if Target can not attack back (yellow enemies)
         if Unit(player):HasBuffs(A.Vanish.ID) ~= 0 and GetToggle(2, "VanishSetting") == 0 then return end  --Stop Rotation if Vanish is set to off
         if IsMounted() then return end  --Stop Rotation if Mounted. Action has check for this but can lag after stealthing
-        if Unit(unitID):HasDeBuffs("BreakAble") > 0 and ((A.Zone == "arena" or A.Zone == "pvp") or (A.Zone ~= "arena" or A.Zone ~= "pvp" and Unit(player):CombatTime() == 0)) then return end --stop on breakable target in pvp   
+        if Unit(unitID):HasDeBuffs("BreakAble") > 0 and ((A.Zone == "arena" or A.Zone == "pvp") or ((A.Zone ~= "arena" or A.Zone ~= "pvp") and Unit(player):CombatTime() == 0)) then return end --stop on breakable target in pvp
         local isBurst = BurstIsON(unitID) -- @boolean
         local inMelee = A.Kick:IsInRange(unitID) -- @boolean
         local inCombat = Unit(player):CombatTime() > 0
@@ -581,7 +581,10 @@ A[3] = function(icon)
 			elseif IsUnitEnemy("target") then
 				unitIDinterrupt = "target"
 			end
-            local function DetermineInterrupts(unit)    
+            local Slidermin, Slidermax = Action.InterruptGetSliders("RyanInterrupts")
+
+            local function DetermineInterrupts(unit)
+                --Return Vars used for each interrupt so logic is always the same for interrupt and autotargeting  
                 local kick = castLeft > (2*A.GetPing()) and A.Kick:IsReady(unit) and not notKickAble  and A.AbsentImun(nil, unit, Temp.TotalAndPhysKick) 
                 local cheapshot = castLeft > (2*A.GetPing()) and A.CheapShot:IsReady(unit)  and Unit(unit):GetDR("stun") > 0 and not Unit(unit):IsBoss() and Unit(unit):HasBuffs(A.Sanguine.ID) == 0 and A.CheapShot:AbsentImun(unit, Temp.TotalAndPhysAndCC)
                 local gouge = castLeft > (2*A.GetPing()) and A.Gouge:IsReady(unit)  and Player:IsBehind(.3) and Unit(unit):GetDR("incapacitate") > 0 and not Unit(unit):IsBoss() and A.Gouge:AbsentImun(unit, Temp.TotalAndPhysAndCC)
@@ -590,8 +593,7 @@ A[3] = function(icon)
                 local blind = castLeft > (2*A.GetPing()) and A.Blind:IsReady(unit)  and Unit(unit):GetDR("disorient") > 0 and not Unit(unit):IsBoss() and A.Blind:AbsentImun(unit, Temp.TotalAndPhysAndCC)
                 return kick, cheapshot, gouge, kidneyshot, quakingpalm, blind
             end
-            DetermineInterrupts = A.MakeFunctionCachedDynamic(DetermineInterrupts)
-            --should be faster dynamic cached since the number of nameplates is unknown
+            DetermineInterrupts = A.MakeFunctionCachedDynamic(DetermineInterrupts) --should be faster dynamic cached since the number of nameplates is unknown
             if A.GetToggle(2, "InterruptList") and inInstance then--uses ryan interrupt table in SL dungeons and raid instance IDs
                 useKick, useCC, useRacial, notKickAble, castLeft, castDoneTime = InterruptIsValid(unitIDinterrupt, "RyanInterrupts", true)
             else
@@ -600,11 +602,9 @@ A[3] = function(icon)
             if useKick or useCC or useRacial then
                 local kickCanBeUsed, cheapshotCanBeUsed, gougeCanBeUsed, kidneyshotCanBeUsed, quakingpalmCanBeUsed, blindCanBeUsed = DetermineInterrupts(unitIDinterrupt)
                 local CastTimeRemaining, Percentcast, SpellID, _ ,_ , IsChanneling = Unit(unitIDinterrupt):IsCastingRemains()
-                local Slidermin, Slidermax = Action.InterruptGetSliders("RyanInterrupts")
                 --this is personal check for my Action install, if you're reading this and want to know why i check this DM me and i'll explain it. 
                 local percenttokick = Percentcast > Slidermin
                 --Var used for each interrupt so logic is always the same for interrupt and autotargeting
-                
                 --This checks the SpellID of the cast against my table to decide to wait for a channel instead of interrupting the first cast
                 --useful for abilities that should be interrupted during the channel to make it go on CD instead of enemy spamming it
                 if Channels[SpellID] then
@@ -616,7 +616,7 @@ A[3] = function(icon)
                     return A.Kick:Show(icon)
                 end
                 -- useCC / useRacial
-                if (not useKick or notKickAble or A.Kick:GetCooldown() > 0) and stopbeforechannel and Unit(unitIDinterrupt):HasBuffs(A.Inspired.ID) == 0 then
+                if (not useKick or notKickAble or A.Kick:GetCooldown() > 0) and percenttokick and stopbeforechannel and Unit(unitIDinterrupt):HasBuffs(A.Inspired.ID) == 0 then
                     if useCC and cheapshotCanBeUsed then
                         return A.CheapShot:Show(icon)
                     elseif useCC and gougeCanBeUsed then
@@ -638,9 +638,12 @@ A[3] = function(icon)
                     else
                         useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(val)
                     end
+                    local CastTimeRemaining, Percentcast, SpellID, _ ,_ , IsChanneling = Unit(val):IsCastingRemains()
+                    --this is personal check for my Action install, if you're reading this and want to know why i check this DM me and i'll explain it. 
+                    local percenttokick = Percentcast > Slidermin
                     --redfine interrupts for each nameplate
                     local kickCanBeUsed, cheapshotCanBeUsed, gougeCanBeUsed, kidneyshotCanBeUsed, quakingpalmCanBeUsed, blindCanBeUsed = DetermineInterrupts(val)
-                    if Unit(val):HasBuffs(A.Inspired.ID) == 0 and ValidAutotarget(val)
+                    if percenttokick and Unit(val):HasBuffs(A.Inspired.ID) == 0 and ValidAutotarget(val)
                         and ((UnitCanAttack("player", val) and Unit(val):GetRange() <=8  and not Unit(val):IsTotem()) or Unit(val):IsDummy()) 
                         and ((useKick and kickCanBeUsed)
                             or (useCC and cheapshotCanBeUsed)

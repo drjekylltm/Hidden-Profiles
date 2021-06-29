@@ -756,9 +756,9 @@ A.Data.ProfileUI                                     = {
 			    {
                     E = "Dropdown",
                     OT = {
-                        { text = "Always", value = 2 },
-                        { text = "Once", value = 1 },
                         { text = "Never", value = 0 },
+                        { text = "Once", value = 1 },
+                        { text = "Always", value = 2 },
                     },
                     DB                 = "REBTE",
                     DBV             = 0,
