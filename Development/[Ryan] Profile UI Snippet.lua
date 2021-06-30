@@ -113,7 +113,7 @@ L.Interrupting                                            = {
     ruRU = "Прерывание",
 }
 L.AutoTargeting                                            = {
-    enUS = "Auto Targeting",
+    enUS = "Auto Targeting\nRequires Auto Target on General Tab",
 	ruRU = "Автоматический таргетинг",
 }
 L.Opener                                            = {
@@ -184,7 +184,7 @@ local SliderMarginOptions = { margin = { top = 10 } }
 local LayoutConfigOptions = { gutter = 6, padding = { left = 5, right = 5 } }
 A.Data.ProfileEnabled[A.CurrentProfile]             = true
 A.Data.ProfileUI                                     = {
-    DateTime = "v10.2 (29.6.2021) #9.1 QoL",
+    DateTime = "v10.2.1 (30.6.2021) #EnemyTeams",
     [2] = {
         [ACTION_CONST_ROGUE_SUBTLETY] = {
             LayoutOptions = LayoutConfigOptions,
@@ -779,6 +779,40 @@ A.Data.ProfileUI                                     = {
                     M                 = {},
                 },
             },
+            {
+                {
+                    E                   = "Checkbox",
+                    DB                  = "SBSTarget",
+                    DBV                 = true,
+                    L = {
+                        ANY = "Spread Serrated Bone Spike",
+                    },
+                    TT = {
+                        ANY = "Auto Spread\nSerrated Bone Spike\n\nRight click: Create macro",
+                    },
+                    M                 = {},
+                },
+                {
+                    E                 = "Checkbox",
+                    DB                = "MFDSnipping",
+                    DBV               = true,
+                    L = {
+                        ANY = "MFD Sniping",
+                    },
+                    TT = {
+                        ANY = "Target Enemy based on time to die for MFD\n\nRight click: Create macro",
+                    },
+                    M                 = {},
+                },
+            },           
+           
+           
+           
+           
+           
+           
+           
+           
             { -- [2] Poisons
                 {
                     E                 = "Header",

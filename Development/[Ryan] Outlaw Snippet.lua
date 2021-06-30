@@ -1,45 +1,45 @@
 local _G, setmetatable, pairs, type, math = _G, setmetatable, pairs, type, math
---local huge = math.huge
---local math_max					= math.max 
+local huge = math.huge
+local math_max					= math.max 
 local random = math.random
 local TMW = _G.TMW
 local Action = _G.Action
---local Toaster = _G.Toaster
+local Toaster = _G.Toaster
 local GetSpellTexture = _G.TMW.GetSpellTexture
 local CONST = Action.Const
---local Listener = Action.Listener
+local Listener = Action.Listener
 local Create = Action.Create
 local GetToggle = Action.GetToggle
---local GetLatency = Action.GetLatency
+local GetLatency = Action.GetLatency
 local GetGCD = Action.GetGCD
 local GetCurrentGCD = Action.GetCurrentGCD
---local ShouldStop = Action.ShouldStop
+local ShouldStop = Action.ShouldStop
 local BurstIsON = Action.BurstIsON
 local AuraIsValid = Action.AuraIsValid
 local InterruptIsValid = Action.InterruptIsValid
---local DetermineUsableObject = Action.DetermineUsableObject
---local Utils = Action.Utils
+local DetermineUsableObject = Action.DetermineUsableObject
+local Utils = Action.Utils
 local BossMods = Action.BossMods
 local TeamCache = Action.TeamCache
---local EnemyTeam = Action.EnemyTeam
---local FriendlyTeam = Action.FriendlyTeam
---local LoC = Action.LossOfControl
+local EnemyTeam = Action.EnemyTeam
+local FriendlyTeam = Action.FriendlyTeam
+local LoC = Action.LossOfControl
 local Player = Action.Player
 local MultiUnits = Action.MultiUnits
 local ActiveUnitPlates = MultiUnits:GetActiveUnitPlates()
 local UnitCooldown = Action.UnitCooldown
 local Unit = Action.Unit
---local Covenant = _G.LibStub("Covenant")
+local Covenant = _G.LibStub("Covenant")
 local IsUnitEnemy = Action.IsUnitEnemy
---local IsUnitFriendly = Action.IsUnitFriendly
---local Combat = Action.Combat
---local DisarmIsReady = Action.DisarmIsReady
+local IsUnitFriendly = Action.IsUnitFriendly
+local Combat = Action.Combat
+local DisarmIsReady = Action.DisarmIsReady
 local LastPlayerCastID = Action.LastPlayerCastID
 --local Azerite = LibStub("AzeriteTraits")
 local ACTION_CONST_ROGUE_OUTLAW = CONST.ROGUE_OUTLAW
 local ACTION_CONST_AUTOTARGET = CONST.AUTOTARGET
 --local ACTION_CONST_SPELLID_FREEZING_TRAP = CONST.SPELLID_FREEZING_TRAP
---local IsIndoors, UnitIsUnit = _G.IsIndoors, _G.UnitIsUnit
+local IsIndoors, UnitIsUnit = _G.IsIndoors, _G.UnitIsUnit
 
 Action[ACTION_CONST_ROGUE_OUTLAW] = {
     -- Racial
@@ -371,9 +371,9 @@ A[3] = function(icon)
         local isBurst = BurstIsON(unitID) -- @boolean
         local inMelee = A.Kick:IsInRange(unitID) -- @boolean
         local inCombat = Unit(player):CombatTime() > 0
-        local inAoE = MultiUnits:GetByRange(8) >= 2
+        local inAoE = MultiUnits:GetByRange(5+3*boolnumber(A.AcrobaticStrikes:IsTalentLearned())) >= 2
         local extraBSCP = boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1)
-        local EightYardTTD = A.MultiUnits:GetByRangeAreaTTD(8) --@number average time to die of all targets in 8 yards
+        local EightYardTTD = A.MultiUnits:GetByRangeAreaTTD(5+3*boolnumber(A.AcrobaticStrikes:IsTalentLearned())) --@number average time to die of all targets in 8 yards
         --Testing
 
         --Stealth with target enemy
@@ -465,7 +465,7 @@ A[3] = function(icon)
  	            then
                     for val in pairs(ActiveUnitPlates) do
                         if 	Unit(val):HasDeBuffs(A.BetweenTheEyes.ID, true) ~= 0 	-- if a nameplate has BTE buff
-                            and Unit(val):GetRange() <=8 --and is in melee range
+                            and A.Kick:IsInRange(val) --and is in melee range
                             and ((UnitCanAttack("player", val) and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) then
                                 return true
                         end
@@ -509,13 +509,13 @@ A[3] = function(icon)
                         return A.SerratedBoneSpike:Show(icon)
                     end
                 --all targets have bonespike or autotarget is off
-                    if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) >= MultiUnits:GetByRange(15) or not Action.GetToggle(1, "AutoTarget") then
+                    if Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) >= MultiUnits:GetByRange(15) or not Action.GetToggle(1, "AutoTarget") or not Action.GetToggle(2, "SBSTarget") then
                         if (Unit(unitID):TimeToDie() >= A.SerratedBoneSpike:GetSpellChargesFullRechargeTime() - 30 * Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)) or IsInRaid() then
                             return A.SerratedBoneSpike:Show(icon)
                             end
                     end
                 --Bone Spike Targeting
-                    if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 and Action.GetToggle(1, "AutoTarget") and ValidKeeptarget(unitID) and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15) then
+                    if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0 and Action.GetToggle(1, "AutoTarget") and Action.GetToggle(2, "SBSTarget") and ValidKeeptarget(unitID) and Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID) < MultiUnits:GetByRange(15) then
                         for val in pairs(ActiveUnitPlates) do
                             if 	(Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and Unit(val):TimeToDie() > 1 and MultiUnits:GetByRange(15) >= 2 and ValidAutotarget(val))
                                 and
@@ -556,7 +556,7 @@ A[3] = function(icon)
                     return A.Dispatch:Show(icon)
                 end
                 --MfD Snipping
-                if A.MarkedForDeath:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and MFDSnipe() then
+                if A.MarkedForDeath:IsReady(unitID) and Action.GetToggle(1, "AutoTarget") and Action.GetToggle(2, "MFDSnipping") and MFDSnipe() then
                     return true
                 end
                 --MFD if possible, with flurry active
@@ -631,8 +631,9 @@ A[3] = function(icon)
                 end
             end
 			--Auto Targeting Interrupts
-			if Action.GetToggle(1, "AutoTarget") and A.GetToggle(2, "ATInterrupt") and not useKick and not useCC and not useRacial and inAoE  and ValidKeeptarget(unitID) and GetCurrentGCD() ~= 0 then  -- and Unit("player"):CombatTime() > 0 i dont think i care if we are in combat for interrupt auto targeting
-				for val in pairs(ActiveUnitPlates) do
+			if Action.GetToggle(1, "AutoTarget") and A.GetToggle(2, "ATInterrupt") and ((not useKick and not useCC and not useRacial) or not inMelee) and ValidKeeptarget(unitID) and GetCurrentGCD() ~= 0 then  -- and Unit("player"):CombatTime() > 0 i dont think i care if we are in combat for interrupt auto targeting
+                -- removed and inAoE check from above since its possible target is far and nameplate is in melee, i only need one nameplate in melee to check for kicks
+                for val in pairs(ActiveUnitPlates) do
                     if A.GetToggle(2, "InterruptList") and inInstance then--uses ryan interrupt table in SL dungeons and raid instance IDs
                         useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(val, "RyanInterrupts", true)
                     else
@@ -644,7 +645,7 @@ A[3] = function(icon)
                     --redfine interrupts for each nameplate
                     local kickCanBeUsed, cheapshotCanBeUsed, gougeCanBeUsed, kidneyshotCanBeUsed, quakingpalmCanBeUsed, blindCanBeUsed = DetermineInterrupts(val)
                     if percenttokick and Unit(val):HasBuffs(A.Inspired.ID) == 0 and ValidAutotarget(val)
-                        and ((UnitCanAttack("player", val) and Unit(val):GetRange() <=8  and not Unit(val):IsTotem()) or Unit(val):IsDummy()) 
+                        and ((UnitCanAttack("player", val) and A.Kick:IsInRange(val) and not Unit(val):IsTotem()) or Unit(val):IsDummy()) 
                         and ((useKick and kickCanBeUsed)
                             or (useCC and cheapshotCanBeUsed)
                             or (useCC and gougeCanBeUsed)
@@ -743,7 +744,7 @@ A[3] = function(icon)
                 then
                 return A.RollTheBones:Show(icon)
             end
-            if (ignoretimers or inCombat or BossMods:IsEngage()) and A.SinisterStrike:IsInRange() then
+            if (ignoretimers or inCombat or BossMods:IsEngage()) and inMelee then
                 if Player:ComboPointsDeficit() < 2 + extraBSCP  and GetCurrentGCD() == 0  then
                     if A.BetweenTheEyes:IsReady(unitID) then
                         return A.BetweenTheEyes:Show(icon)
@@ -961,7 +962,7 @@ A[3] = function(icon)
                 return A.GhostlyStrike:Show(icon)
             end
             --Use Spesis Stealth buff on Ambush, Pool energy for Ambush
-            if Unit(player):HasBuffs(A.SepsisStealth.ID) ~= 0 and A.Ambush:IsInRange(unitID) and Player:ComboPointsDeficit() >= 1 then
+            if Unit(player):HasBuffs(A.SepsisStealth.ID) ~= 0 and inMelee and Player:ComboPointsDeficit() >= 1 then
                 if A.Ambush:IsReadyByPassCastGCD(unitID) then
                     return A.Ambush:Show(icon)
                 end
