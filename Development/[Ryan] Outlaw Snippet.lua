@@ -584,91 +584,77 @@ A[3] = function(icon)
                 end
         end
         local function Interrupts()
-            local inInstance = IsInAnInstance[A.InstanceInfo.ID]
-	        local unitIDinterrupt = "none"
-            local stopbeforechannel = true
-			if IsUnitEnemy("mouseover") then
-				unitIDinterrupt = "mouseover"
-			elseif IsUnitEnemy("target") then
-				unitIDinterrupt = "target"
-			end
-            local Slidermin, Slidermax = Action.InterruptGetSliders("RyanInterrupts")
-
-            local function DetermineInterrupts(unit)
-                --Return Vars used for each interrupt so logic is always the same for interrupt and autotargeting  
-                local kick = castLeft > (2*A.GetPing()) and A.Kick:IsReady(unit) and not notKickAble  and A.AbsentImun(nil, unit, Temp.TotalAndPhysKick) 
-                local cheapshot = castLeft > (2*A.GetPing()) and A.CheapShot:IsReady(unit)  and Unit(unit):GetDR("stun") > 0 and not Unit(unit):IsBoss() and Unit(unit):HasBuffs(A.Sanguine.ID) == 0 and A.CheapShot:AbsentImun(unit, Temp.TotalAndPhysAndCC)
-                local gouge = castLeft > (2*A.GetPing()) and A.Gouge:IsReady(unit)  and Player:IsBehind(.3) and Unit(unit):GetDR("incapacitate") > 0 and not Unit(unit):IsBoss() and A.Gouge:AbsentImun(unit, Temp.TotalAndPhysAndCC)
-                local kidneyshot = castLeft > (2*A.GetPing()) and A.KidneyShot:IsReady(unit)  and Player:ComboPoints() >= 1 and Unit(unit):GetDR("stun") > 0 and not Unit(unit):IsBoss() and Unit(unit):HasBuffs(A.Sanguine.ID) == 0 and A.KidneyShot:AbsentImun(unit, Temp.TotalAndPhysAndCC)
-                local quakingpalm = castLeft > (2*A.GetPing()) and A.QuakingPalm:IsReady(unit)  and Unit(unit):GetDR("incapacitate") > 0 and not Unit(unit):IsBoss() and A.QuakingPalm:AbsentImun(unit, Temp.TotalAndPhysAndCC)
-                local blind = castLeft > (2*A.GetPing()) and A.Blind:IsReady(unit)  and Unit(unit):GetDR("disorient") > 0 and not Unit(unit):IsBoss() and A.Blind:AbsentImun(unit, Temp.TotalAndPhysAndCC)
-                return kick, cheapshot, gouge, kidneyshot, quakingpalm, blind
-            end
-            DetermineInterrupts = A.MakeFunctionCachedDynamic(DetermineInterrupts) --should be faster dynamic cached since the number of nameplates is unknown
-            if A.GetToggle(2, "InterruptList") and inInstance then--uses ryan interrupt table in SL dungeons and raid instance IDs
-                useKick, useCC, useRacial, notKickAble, castLeft, castDoneTime = InterruptIsValid(unitIDinterrupt, "RyanInterrupts", true)
-            else
-                useKick, useCC, useRacial, notKickAble, castLeft, castDoneTime = InterruptIsValid(unitIDinterrupt)
-            end
-            if useKick or useCC or useRacial then
-                local kickCanBeUsed, cheapshotCanBeUsed, gougeCanBeUsed, kidneyshotCanBeUsed, quakingpalmCanBeUsed, blindCanBeUsed = DetermineInterrupts(unitIDinterrupt)
-                local CastTimeRemaining, Percentcast, SpellID, _ ,_ , IsChanneling = Unit(unitIDinterrupt):IsCastingRemains()
-                --this is personal check for my Action install, if you're reading this and want to know why i check this DM me and i'll explain it. 
-                local percenttokick = Percentcast > Slidermin
-                --Var used for each interrupt so logic is always the same for interrupt and autotargeting
-                --This checks the SpellID of the cast against my table to decide to wait for a channel instead of interrupting the first cast
-                --useful for abilities that should be interrupted during the channel to make it go on CD instead of enemy spamming it
-                if Channels[SpellID] then
-                    stopbeforechannel = IsChanneling 
-                 end
-
-                -- useKick
-                if useKick and percenttokick and stopbeforechannel and kickCanBeUsed then
-                    return A.Kick:Show(icon)
+			local inInstance = IsInAnInstance[A.InstanceInfo.ID]													
+            local unitIDinterrupt = "none"
+                                              
+                if IsUnitEnemy("mouseover") then
+                    unitIDinterrupt = "mouseover"
+                elseif IsUnitEnemy("target") then
+                    unitIDinterrupt = "target"
                 end
-                -- useCC / useRacial
-                if (not useKick or notKickAble or A.Kick:GetCooldown() > 0) and percenttokick and stopbeforechannel and Unit(unitIDinterrupt):HasBuffs(A.Inspired.ID) == 0 then
-                    if useCC and cheapshotCanBeUsed then
-                        return A.CheapShot:Show(icon)
-                    elseif useCC and gougeCanBeUsed then
-                        return A.Gouge:Show(icon)
-                    elseif useCC and kidneyshotCanBeUsed then
-                        return A.KidneyShot:Show(icon)
-                    elseif useRacial and quakingpalmCanBeUsed then
-                        return A.QuakingPalm:Show(icon)
-                    elseif useCC and blindCanBeUsed then
-                        return A.Blind:Show(icon)
+ 
+                                                                                                                                                                  
+                if A.GetToggle(2, "InterruptList") and inInstance then--uses ryan interrupt table in SL dungeons and raid instance IDs
+                   useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(unitIDinterrupt, "RyanInterrupts", true)
+                else
+                    useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(unitIDinterrupt)
+                end
+                if useKick or useCC or useRacial then
+                                                                                                                                                                             
+    
+                    -- useKick
+                    if useKick and castLeft > 0 and not notKickAble  and A.AbsentImun(nil, unitIDinterrupt, Temp.TotalAndPhysKick) and A.Kick:IsReady(unitIDinterrupt) then
+                        return A.Kick:Show(icon)
+                    end
+                    -- useCC / useRacial
+                    if not useKick or notKickAble or A.Kick:GetCooldown() > 0 and Unit(unitIDinterrupt):HasBuffs(A.Inspired.ID) == 0 then
+                        if useCC and (Player:GetStance() ~= 0) and A.CheapShot:IsReady(unitIDinterrupt) and A.CheapShot:AbsentImun(unitIDinterrupt, Temp.TotalAndPhysAndCC) and Unit(unitIDinterrupt):GetDR("stun") > 0 and not Unit(unitIDinterrupt):IsBoss() and Unit(unitIDinterrupt):HasBuffs(A.Sanguine.ID) == 0 then
+                            return A.CheapShot:Show(icon)
+                        end
+                        if useCC and A.Gouge:IsReady(unitIDinterrupt) and A.Gouge:AbsentImun(unitIDinterrupt, Temp.TotalAndPhysAndCC) and Player:IsBehind(.3) and Unit(unitIDinterrupt):GetDR("incapacitate") > 0 and not Unit(unitIDinterrupt):IsBoss() then
+                            return A.Gouge:Show(icon)
+                        end
+                        if useCC and A.KidneyShot:IsReady(unitIDinterrupt) and A.KidneyShot:AbsentImun(unitIDinterrupt, Temp.TotalAndPhysAndCC) and Player:ComboPoints() >= 1 and Unit(unitIDinterrupt):GetDR("stun") > 0 and not Unit(unitIDinterrupt):IsBoss() and Unit(unitIDinterrupt):HasBuffs(A.Sanguine.ID) == 0 then
+                            return A.KidneyShot:Show(icon)
+                        end
+                        if useRacial and A.QuakingPalm:IsReady(unitIDinterrupt) and A.QuakingPalm:AbsentImun(unitIDinterrupt, Temp.TotalAndPhysAndCC) and Unit(unitIDinterrupt):GetDR("incapacitate") > 0 and not Unit(unitIDinterrupt):IsBoss() then
+                            return A.QuakingPalm:Show(icon)
+                        end
+                        if useCC and A.Blind:IsReady(unitIDinterrupt) and A.Blind:AbsentImun(unitIDinterrupt, Temp.TotalAndPhysAndCC) and Unit(unitIDinterrupt):GetDR("disorient") > 0 and not Unit(unitIDinterrupt):IsBoss() then
+                            return A.Blind:Show(icon)
+                        end
+                    end
+                end
+                --Auto Targeting Interrupts
+                if Action.GetToggle(1, "AutoTarget") and A.GetToggle(2, "ATInterrupt") and not useKick and not useCC and not useRacial and MultiUnits:GetByRange(8) >= 2  and GetCurrentGCD() ~= 0 then  -- and Unit("player"):CombatTime() > 0 i dont think i care if we are in combat for interrupt auto targeting
+                                                                                                                                                                           
+                    for val in pairs(ActiveUnitPlates) do
+    
+                if A.GetToggle(2, "InterruptList") and inInstance then--uses ryan interrupt table in SL dungeons and raid instance IDs
+                   useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(val, "RyanInterrupts", true)
+                else
+                    useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(val)
+                end
+    
+                        if Unit(val):HasBuffs(A.Inspired.ID) == 0
+                        and ((UnitCanAttack("player", val) and Unit(val):GetRange() <=8  and not Unit(val):IsTotem())	or Unit(val):IsDummy()) -- and UnitThreatSituation("player", val) ~= nil
+                        and  ((useKick and castLeft > 0 and not notKickAble  and A.AbsentImun(nil, val, Temp.TotalAndPhysKick) and A.Kick:IsReady(val))
+                        or (useCC and (Player:GetStance() ~= 0) and A.CheapShot:IsReady(val) and A.CheapShot:AbsentImun(val, Temp.TotalAndPhysAndCC) and Unit(val):GetDR("stun") > 0 and not Unit(val):IsBoss() and Unit(val):HasBuffs(A.Sanguine.ID) == 0)
+                        or (useCC and A.Gouge:IsReady(val) and A.Gouge:AbsentImun(val, Temp.TotalAndPhysAndCC) and Player:IsBehind(.3) and Unit(val):GetDR("incapacitate") > 0 and not Unit(val):IsBoss())
+                        or (useCC and A.KidneyShot:IsReady(val) and A.KidneyShot:AbsentImun(val, Temp.TotalAndPhysAndCC) and Player:ComboPoints() >= 1 and Unit(val):GetDR("stun") > 0 and not Unit(val):IsBoss() and Unit(val):HasBuffs(A.Sanguine.ID) == 0)
+                        or (useRacial and A.QuakingPalm:IsReady(val) and A.QuakingPalm:AbsentImun(val, Temp.TotalAndPhysAndCC) and Unit(val):GetDR("incapacitate") > 0 and not Unit(val):IsBoss())
+                        or (useCC and A.Blind:IsReady(val) and A.Blind:AbsentImun(val, Temp.TotalAndPhysAndCC) and Unit(val):GetDR("disorient") > 0 and not Unit(val):IsBoss()))                
+                                                              
+                        then
+                                return A:Show(icon, ACTION_CONST_AUTOTARGET)
+                        end
                     end
                 end
             end
-			--Auto Targeting Interrupts
-			if Action.GetToggle(1, "AutoTarget") and A.GetToggle(2, "ATInterrupt") and ((not useKick and not useCC and not useRacial) or not inMelee) and ValidKeeptarget(unitID) and GetCurrentGCD() ~= 0 then  -- and Unit("player"):CombatTime() > 0 i dont think i care if we are in combat for interrupt auto targeting
-                -- removed and inAoE check from above since its possible target is far and nameplate is in melee, i only need one nameplate in melee to check for kicks
-                for val in pairs(ActiveUnitPlates) do
-                    if A.GetToggle(2, "InterruptList") and inInstance then--uses ryan interrupt table in SL dungeons and raid instance IDs
-                        useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(val, "RyanInterrupts", true)
-                    else
-                        useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(val)
-                    end
-                    local CastTimeRemaining, Percentcast, SpellID, _ ,_ , IsChanneling = Unit(val):IsCastingRemains()
-                    --this is personal check for my Action install, if you're reading this and want to know why i check this DM me and i'll explain it. 
-                    local percenttokick = Percentcast > Slidermin
-                    --redfine interrupts for each nameplate
-                    local kickCanBeUsed, cheapshotCanBeUsed, gougeCanBeUsed, kidneyshotCanBeUsed, quakingpalmCanBeUsed, blindCanBeUsed = DetermineInterrupts(val)
-                    if percenttokick and Unit(val):HasBuffs(A.Inspired.ID) == 0 and ValidAutotarget(val)
-                        and ((UnitCanAttack("player", val) and A.Kick:IsInRange(val) and not Unit(val):IsTotem()) or Unit(val):IsDummy()) 
-                        and ((useKick and kickCanBeUsed)
-                            or (useCC and cheapshotCanBeUsed)
-                            or (useCC and gougeCanBeUsed)
-                            or (useCC and kidneyshotCanBeUsed)
-                            or (useRacial and quakingpalmCanBeUsed)
-                            or (useCC and blindCanBeUsed))
-                            then
-                                    return A:Show(icon, ACTION_CONST_AUTOTARGET)
-					end
-				end
-			end
-        end
+
+
+
+
         local function Defensives()
             if Unit(player):IsTankingAoE(10) and A.TricksOfTheTrade:IsReady("focus") then
                 return A.TricksOfTheTrade:Show(icon)

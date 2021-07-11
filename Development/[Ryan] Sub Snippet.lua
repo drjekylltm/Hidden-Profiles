@@ -1225,13 +1225,14 @@ A[3] = function(icon)
                 then
                     return A.Gloomblade:Show(icon)
                 end
+                print("checkingBackstab")
                 --build->add_action( this, "Backstab" );
                 if A.Backstab:IsReady(unitID)
-                and InMelee
+                and inMelee
                 then
                     return A.Backstab:Show(icon)
                 end
-
+                print("noBackstab")
                 --TODO check this first if there are bugs
                 --In combat ranged GCD filler
                 if A.ShurikenToss:IsReady(unitID) and Player:Energy() >=90 and Unit(unitID):HealthPercent() < 100 and not inMelee then
