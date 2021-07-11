@@ -1251,9 +1251,8 @@ A[3] = function(icon)
 
 
             --def->add_action( "call_action_list,name=cds", "Check CDs at first" );
-            --TODO add is burst logic
-            if (true) and CDs() then return true end
-
+            if isBurst and CDs() then return true end
+            
             --def->add_action( "run_action_list,name=stealthed,if=stealthed.all", "Run fully switches to the Stealthed Rotation (by doing so, it forces pooling if nothing is available)." );
             if (Player:IsStealthed()) and StealthedRotation() then
                 return true
@@ -1269,9 +1268,9 @@ A[3] = function(icon)
                 return A.SliceAndDice:Show(icon)
             end
             --def->add_action( "call_action_list,name=stealth_cds,if=variable.use_priority_rotation", "Priority Rotation? Let's give a crap about energy for the stealth CDs (builder still respect it). Yup, it can be that simple." );
-            if (use_priority_rotation) and StealthCooldowns() then return true end
+            if isBurst and (use_priority_rotation) and StealthCooldowns() then return true end
             --def->add_action( "call_action_list,name=stealth_cds,if=energy.deficit<=variable.stealth_threshold", "Consider using a Stealth CD when reaching the energy threshold" );
-            if (Player:EnergyDeficit() <= stealth_threshold) and StealthCooldowns() then return true end
+            if isBurst and (Player:EnergyDeficit() <= stealth_threshold) and StealthCooldowns() then return true end
             --def->add_action( "call_action_list,name=finish,if=effective_combo_points>=cp_max_spend" );
             if (effective_combo_points>=Player:ComboPointsMax()) and Finishers() then return true end
             --def->add_action( "call_action_list,name=finish,if=combo_points.deficit<=1 or fight_remains<=1 and effective_combo_points>=3 or buff.symbols_of_death_autocrit.up and effective_combo_points>=4", "Finish at 4+ without DS or with SoD crit buff, 5+ with DS (outside stealth)" );
