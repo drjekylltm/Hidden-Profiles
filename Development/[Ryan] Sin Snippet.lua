@@ -64,7 +64,7 @@ Action[ACTION_CONST_ROGUE_ASSASSINATION] = {
     GhostlyStrike = Create({ Type = "Spell", ID = 196937}),
     BladeRush = Create({ Type = "Spell", ID = 271877}),
 	Nightstalker = Create({ Type = "Spell", ID = 14062}),
-	Exsanguinate = Create({ Type = "Spell", ID = 200806}),
+	Exsanguinate = Create({ Type = "Spell", ID = 200806, isTalent = true}),
 	CrimsonTempest = Create({ Type = "Spell", ID = 121411}),
 	MasterAssassin = Create({ Type = "Spell", ID = 255989}),
     -- general

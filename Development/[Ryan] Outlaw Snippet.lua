@@ -66,8 +66,10 @@ Action[ACTION_CONST_ROGUE_OUTLAW] = {
     QuickDraw = Create({ Type = "Spell", ID = 196938, isTalent = true, Hidden = true }),
     AcrobaticStrikes = Create({ Type = "Spell", ID = 196924, isTalent = true, Hidden = true}),
     Elusiveness = Create({ Type = "Spell", ID = 79008, isTalent = true, Hidden = true}),
-    DeeperStratagem = Create({ Type = "Spell", isTalent = true, Hidden = true}),
+    DeeperStratagem = Create({ Type = "Spell", ID = 193531, isTalent = true, Hidden = true}),
+    DirtyTricks = Create({ Type = "Spell", ID = 108216, isTalent = true, Hidden = true}),
     MarkedForDeath = Create({ Type = "Spell", ID = 137619, isTalent = true}),
+    Vigor = Create({ Type = "Spell", ID = 14983, isTalent = true}),
     --General -- All rogue spells not spec specific
     Stealth = Create({ Type = "Spell", ID = 1784}),
     InstantPoison = Create({ Type = "Spell", ID = 315584}),
@@ -103,6 +105,8 @@ Action[ACTION_CONST_ROGUE_OUTLAW] = {
 	MarkoftheMasterAssassin = Create({ Type = "Spell", ID = 340076,Hidden = true}),
 	TinyToxicBlade = Create({ Type = "Spell", ID = 340078,Hidden = true}),
 	DeathlyShadows = Create({ Type = "Spell", ID = 340092,Hidden = true}),
+    GreenskinsWickers = Create({ Type = "Spell", ID = 340573,Hidden = true}), -- Buff from Legendary Greenskin's 15 second duration
+    ConcealedBlunderbuss = Create({ Type = "Spell", ID = 340088, Hidden = true}), -- Buff from Legendary ConcealedBlunderbuss maybe? 15 second duration
     --rollthebonesbuff
     Broadside = Create({ Type = "Spell", ID = 193356, Hidden = true}),
     BuriedTreasure = Create({ Type = "Spell", ID = 199600, Hidden = true}),
@@ -262,16 +266,13 @@ local function UseItems(unitID)
 end
 local function EchoingBuffMatch()
 
-local EchoingBuffs = {
-[2] = Unit(player):HasBuffs(323558,_,true) > 0,
-[3] = Unit(player):HasBuffs(323559,_,true) > 0,
-[4] = Unit(player):HasBuffs(323560,_,true) > 0,
-[5] = Unit(player):HasBuffs(354838,_,true) > 0,
-}
-
-if EchoingBuffs[Player:ComboPoints()]
-    then 
-        return true end
+    local EchoingBuffs = {
+    [2] = Unit(player):HasBuffs(323558,_,true) > 0,
+    [3] = Unit(player):HasBuffs(323559,_,true) > 0,
+    [4] = Unit(player):HasBuffs(323560,_,true) > 0,
+    [5] = Unit(player):HasBuffs(354838,_,true) > 0,
+    }
+    if EchoingBuffs[Player:ComboPoints()] then return true end
 end
 EchoingBuffMatch = A.MakeFunctionCachedStatic(EchoingBuffMatch)
 local function ReTabTarget()
@@ -339,7 +340,6 @@ end
 A[3] = function(icon)
 	-- stop rotation if stolen shademount
 	if Unit(player):HasBuffs(A.StolenShadehound.ID) ~= 0 then return end
-	local _, _, _, _, _, npc_id 		= Unit("target"):InfoGUID() --@number npcID from wowhead/evlui, better than using strings for other languages
 	-- if in Necrotic Wake instance and targetting Companion, stop rotation to allow for covenant Buff cast to finish (stealth breaks cast)
     if A.InstanceInfo.ID == 2286 and Unit("target"):Name() == "Farra" then return end
     -- Stop rotation on Torghast Containers
@@ -347,6 +347,7 @@ A[3] = function(icon)
 	--164698 or 167986 or 165533 or 165523 or 170525 or 167987 or 178523 or 179514 or
 
     --testing
+
 --
         local function TestCustom(n, func)
             local t = debugprofilestop()
@@ -367,13 +368,14 @@ A[3] = function(icon)
         if UnitCanAttack(player, unitID) == false then return end --Stop Rotation if Target can not attack back (yellow enemies)
         if Unit(player):HasBuffs(A.Vanish.ID) ~= 0 and GetToggle(2, "VanishSetting") == 0 then return end  --Stop Rotation if Vanish is set to off
         if IsMounted() then return end  --Stop Rotation if Mounted. Action has check for this but can lag after stealthing
-        if Unit(unitID):HasDeBuffs("BreakAble") > 0 and ((A.Zone == "arena" or A.Zone == "pvp") or ((A.Zone ~= "arena" or A.Zone ~= "pvp") and Unit(player):CombatTime() == 0)) then return end --stop on breakable target in pvp
+        --if Unit(unitID):HasDeBuffs("BreakAble") > 0 and ((A.Zone == "arena" or A.Zone == "pvp") or ((A.Zone ~= "arena" or A.Zone ~= "pvp") and Unit(player):CombatTime() == 0)) then return end --stop on breakable target in pvp
         local isBurst = BurstIsON(unitID) -- @boolean
         local inMelee = A.Kick:IsInRange(unitID) -- @boolean
         local inCombat = Unit(player):CombatTime() > 0
         local inAoE = MultiUnits:GetByRange(5+3*boolnumber(A.AcrobaticStrikes:IsTalentLearned())) >= 2
         local extraBSCP = boolnumber(Unit(player):HasBuffs(A.Broadside.ID) >= 1)
         local EightYardTTD = A.MultiUnits:GetByRangeAreaTTD(5+3*boolnumber(A.AcrobaticStrikes:IsTalentLearned())) --@number average time to die of all targets in 8 yards
+        local _, _, _, _, _, npc_id 		= Unit("target"):InfoGUID() --@number npcID from wowhead/evlui, better than using strings for other languages
         --Testing
 
         --Stealth with target enemy
@@ -384,6 +386,17 @@ A[3] = function(icon)
         if Unit(player):HasBuffs(A.Shadowmeld.ID) ~= 0 then
             return A.Stealth:Show(icon)
         end
+        --Shiv Enrages
+        if A.Shiv:IsReady(unitID) and Action.AuraIsValid(unitID, "UseExpelEnrage", "Enrage") then
+            return A.Shiv:Show(icon)
+        end
+        -- Purge
+        if A.ArcaneTorrent:AutoRacial(unitID) then
+            return A.ArcaneTorrent:Show(icon)
+        end
+---------------------------------------------------------------------------------------------
+--Target Specific Logic (these if statements are run first and ignore all rotational logic)--
+---------------------------------------------------------------------------------------------
         -- kill Explosive Affix
         if Unit(unitID):IsExplosives() and A.SinisterStrike:IsReady(unitID) then
             return A.SinisterStrike:Show(icon)
@@ -391,10 +404,12 @@ A[3] = function(icon)
         if Unit(unitID):IsExplosives() and A.PistolShot:IsReady(unitID) and not inMelee then
             return A.PistolShot:Show(icon)
         end
-        --Shiv Enrages
-        if A.Shiv:IsReady(unitID) and Action.AuraIsValid(unitID, "UseExpelEnrage", "Enrage") then
-            return A.Shiv:Show(icon)
-        end
+        --Large slime in PF,
+        if npc_id == 171887 then 
+            if A.Blind:IsReady(unitID) then 
+                return A.Blind:Show(icon) 
+            else return true end
+        end 
         --Spiteful Shade
         if npc_id == 174773 and Unit(unitID):HasDeBuffs({"Stuned", "Disoriented", "PhysStuned"}) == 0 then
             --Evasion tank
@@ -412,10 +427,20 @@ A[3] = function(icon)
                 return A.PistolShot:Show(icon)
             end
         end
-        -- Purge
-        if A.ArcaneTorrent:AutoRacial(unitID) then
-            return A.ArcaneTorrent:Show(icon)
-        end
+        --Illusionary Vulpin in Mists
+        if npc_id == 165251 then 
+            if Unit(unitID):HasDeBuffs("BreakAble") == 0 then
+                if A.Blind:IsReady(unitID) then 
+                    return A.Blind:Show(icon) 
+                elseif A.KidneyShot:IsReady(unitID) then
+                    return A.KidneyShot:Show(icon)
+                end
+            else return true end
+        end 
+------------------------------
+--END Target Specific Logic --
+------------------------------
+
 ------------------------------------------
 --Function Definitions                  --
 ------------------------------------------
@@ -450,8 +475,6 @@ A[3] = function(icon)
             end
         end
         MFD = A.MakeFunctionCachedStatic(MFD)
-        
-        
         local function BetweenTheEyesRetarget()
                 --disable RTBtE toggle if target has debuff
                 if Unit(unitID):HasDeBuffs(A.BetweenTheEyes.ID, true) ~= 0 and Action.GetToggle(2, "REBTE") == 1 then 
@@ -474,24 +497,12 @@ A[3] = function(icon)
         end
         local function CheckBuffCountRB()
             local count = 0
-            if Unit(player):HasBuffs(A.Broadside.ID) ~= 0 then
-                count = count + 1
-            end
-            if Unit(player):HasBuffs(A.BuriedTreasure.ID) ~= 0 then
-                count = count + 1
-            end
-            if Unit(player):HasBuffs(A.GrandMelee.ID) ~= 0 then
-                count = count + 1
-            end
-            if Unit(player):HasBuffs(A.RuthlessPrecision.ID) ~= 0 then
-                count = count + 1
-            end
-            if Unit(player):HasBuffs(A.TrueBearing.ID) ~= 0 then
-                count = count + 1
-            end
-            if Unit(player):HasBuffs(A.SkullandCrossbones.ID) ~= 0 then
-                count = count + 1
-            end
+            if Unit(player):HasBuffs(A.Broadside.ID) ~= 0 then count = count + 1 end
+            if Unit(player):HasBuffs(A.BuriedTreasure.ID) ~= 0 then count = count + 1 end
+            if Unit(player):HasBuffs(A.GrandMelee.ID) ~= 0 then count = count + 1 end
+            if Unit(player):HasBuffs(A.RuthlessPrecision.ID) ~= 0 then count = count + 1 end
+            if Unit(player):HasBuffs(A.TrueBearing.ID) ~= 0 then count = count + 1 end
+            if Unit(player):HasBuffs(A.SkullandCrossbones.ID) ~= 0 then count = count + 1 end
             return count
         end
         CheckBuffCountRB = A.MakeFunctionCachedStatic(CheckBuffCountRB)
@@ -501,7 +512,7 @@ A[3] = function(icon)
                 ((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + extraBSCP <= Player:ComboPointsDeficit()) -- CP to be generated is less than the deficit
                 or
                 ((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1 + extraBSCP) >= 4+boolnumber(A.DeeperStratagem:IsTalentLearned()) and Player:ComboPointsDeficit() >=4+boolnumber(A.DeeperStratagem:IsTalentLearned())))
-                and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) --not SL dummies :( -- player is on the threat table somewhere (in combat with)
+                and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) -- player is on the threat table somewhere (in combat with)
                 and ((MultiUnits:GetByRange(8) <= 1 and (Unit(player):HasBuffs(A.Opportunity.ID) == 0 or Unit(player):HasBuffs(A.SkullandCrossbones.ID) == 0 or A.SerratedBoneSpike:GetSpellChargesFrac() >= 2.85)) or (inAoE and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0)) -- blade flurry sync
                 then
             --Bonepsike target missing buff
@@ -772,7 +783,7 @@ A[3] = function(icon)
             if A.TricksOfTheTrade:IsReady("focus") and (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 2.5) then
                 return A.TricksOfTheTrade:Show(icon)
             end
-            if A.ShroudOfConcealment:IsReady(player) and IsInRaid() and (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 6) then
+            if A.ShroudOfConcealment:IsReady(player) and IsInRaid() and (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 9) then
                 return A.ShroudOfConcealment:Show(icon)
             end
         end
@@ -813,7 +824,7 @@ A[3] = function(icon)
             if Item and inMelee and Unit(player):HasBuffs(A.Stealth.ID) == 0 and Player:GetDeBuffsUnitCount(A.BetweenTheEyes.ID) >= 1 then --prevent all items in stealth and BTE sync
                 return Item:Show(icon)
             end
-			            -- Use Vanish if setting is set to Auto for MA builds
+			-- Use Vanish if setting is set to Auto for MA builds
 	        if A.Vanish:IsReady(player) and GetToggle(2, "VanishSetting") == 2 and inMelee and inCombat and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) == 0 and A.MarkoftheMasterAssassin:HasLegendaryCraftingPower() and A.KillingSpree:IsTalentLearned() and A.KillingSpree:GetCooldown() <= 2 and EightYardTTD >= 8 then
 					--if aoe and flurry active >= 4 and MFD ready and CP deficit <= 1
 					if ((inAoE and Unit(player):HasBuffs(A.BladeFlurry.ID) >= 4))    --if AOE and bladeflurry will last
@@ -845,24 +856,6 @@ A[3] = function(icon)
 							end
 					end
 			end
-            if A.Fireblood:IsReady(unitID, true) and inMelee and Player:Energy() < 44 then
-                return A.Fireblood:Show(icon)
-            end
-            if A.Berserking:IsReady(unitID, true) and inMelee and Player:Energy() < 44 then
-                return A.Berserking:Show(icon)
-            end
-            if A.BloodFury:IsReady(unitID, true) and inMelee and Player:Energy() < 44 then
-                return A.BloodFury:Show(icon)
-            end
-            if A.LightsJudgment:IsReady(unitID) and Player:Energy() < 44 then
-                return A.LightsJudgment:Show(icon)
-            end
-            if A.BagofTricks:IsReady(player) and inMelee and Player:Energy() < 44 then
-                return A.BagofTricks:Show(icon)
-            end
-            if A.AncestralCall:IsReady(player) and inMelee and Player:Energy() < 44 then
-                return A.AncestralCall:Show(icon)
-            end
             if (A.Flagellation:IsReady(unitID) and Unit(unitID):HasDeBuffs(A.Flagellation.ID, true) == 0 and (EightYardTTD > 4 or Unit(unitID):IsBoss())) and (Player:ComboPointsDeficit() <= 0 + extraBSCP + boolnumber(Unit(player):HasBuffs(A.Opportunity.ID) >= 1 and A.QuickDraw:IsTalentLearned())) then
                 return A.Flagellation:Show(icon)
             end
@@ -894,7 +887,7 @@ A[3] = function(icon)
             --Do not bladerush Spiteful Shades
             if A.BladeRush:IsReady(unitID) and Unit(player):HasBuffs(A.Stealth.ID) == 0 and npc_id ~= 174773
 			and (MultiUnits:GetByRange(8) <= 1 or (inAoE and Unit(player):HasBuffs(A.BladeFlurry.ID) ~= 0))
-			and ((GetToggle(2, "BladeRushRange") <= 6 and Unit(unitID):GetRange() <=5) or (GetToggle(2, "BladeRushRange") >= 6)) then
+			and ((GetToggle(2, "BladeRushRange") and inMelee) or not GetToggle(2, "BladeRushRange")) then
                 return A.BladeRush:Show(icon)
             end
             -- Use Vanish if setting is set to Auto (non MA)
@@ -924,25 +917,43 @@ A[3] = function(icon)
         if A.EchoingReprimand:IsReady(unitID) and (EightYardTTD > 4 or Unit(unitID):IsBoss()) and Player:ComboPointsDeficit() >= 2 then
 			return A.EchoingReprimand:Show(icon)
         end
+        if A.Fireblood:IsReady(unitID, true) and inMelee and Player:Energy() < 44 then
+            return A.Fireblood:Show(icon)
+        end
+        if A.Berserking:IsReady(unitID, true) and inMelee and Player:Energy() < 44 then
+            return A.Berserking:Show(icon)
+        end
+        if A.BloodFury:IsReady(unitID, true) and inMelee and Player:Energy() < 44 then
+            return A.BloodFury:Show(icon)
+        end
+        if A.LightsJudgment:IsReady(unitID) and Player:Energy() < 44 then
+            return A.LightsJudgment:Show(icon)
+        end
+        if A.BagofTricks:IsReady(player) and inMelee and Player:Energy() < 44 then
+            return A.BagofTricks:Show(icon)
+        end
+        if A.AncestralCall:IsReady(player) and inMelee and Player:Energy() < 44 then
+            return A.AncestralCall:Show(icon)
+        end
         end
         local function Finishers()
-            if (A.Zone == "arena" or A.Zone == "pvp") and A.KidneyShot:IsReady(unitID) and Unit(unitID):HasDeBuffs({"Stuned"}) == 0  and Unit(unitID):GetDR("stun") >= 50 and Unit(unitID):IsControlAble("stun") and ((Player:ComboPointsDeficit() <= 2) or (Unit(player):HasBuffs(A.Broadside.ID) >= 1 and (Player:ComboPointsDeficit() <= 3)))  and A.KidneyShot:AbsentImun(unitID, Temp.TotalAndPhysAndCC) then
-                return A.KidneyShot:Show(icon)
-            end
+            --if (A.Zone == "arena" or A.Zone == "pvp") and A.KidneyShot:IsReady(unitID) and Unit(unitID):HasDeBuffs({"Stuned"}) == 0  and Unit(unitID):GetDR("stun") >= 50 and Unit(unitID):IsControlAble("stun") and ((Player:ComboPointsDeficit() <= 2) or (Unit(player):HasBuffs(A.Broadside.ID) >= 1 and (Player:ComboPointsDeficit() <= 3)))  and A.KidneyShot:AbsentImun(unitID, Temp.TotalAndPhysAndCC) then
+            --    return A.KidneyShot:Show(icon)
+            --end
 		if  (Player:ComboPointsDeficit() <= 0 + extraBSCP + boolnumber(Unit(player):HasBuffs(A.Opportunity.ID) >= 1 and A.QuickDraw:IsTalentLearned())) or EchoingBuffMatch() then
-				if (A.SliceAndDice:IsReady(unitID, true) and Unit(player):HasBuffs(A.SliceAndDice.ID) < (1 + (Player:ComboPoints()) * 1.8 ) and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) == 0 and Player:GetStance() <=1 ) then
-					return A.SliceAndDice:Show(icon)
-				end
-				if A.BetweenTheEyes:IsReady(unitID) and (Unit(unitID):TimeToDie() > 3 or Unit(unitID):IsBoss()) then
-					return A.BetweenTheEyes:Show(icon)
-				end
-				if A.Dispatch:IsReady(unitID) then
-					return A.Dispatch:Show(icon)
-				end
-                --evicerate is low level ability, not in loader, show Dispatch icon instead
-                if A.Eviscerate:IsReady(unitID) then
-                    return A.Eviscerate:Show(icon)
-                end
+            if A.BetweenTheEyes:IsReady(unitID) and (Unit(unitID):TimeToDie() > 3 or Unit(unitID):IsBoss()) then
+                return A.BetweenTheEyes:Show(icon)
+            end
+            if (A.SliceAndDice:IsReady(unitID, true) and Unit(player):HasBuffs(A.SliceAndDice.ID) < (1 + (Player:ComboPoints()) * 1.8 ) and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) == 0 and Player:GetStance() <=1 ) then
+				return A.SliceAndDice:Show(icon)
+			end
+			if A.Dispatch:IsReady(unitID) then
+				return A.Dispatch:Show(icon)
+			end
+            --evicerate is low level ability, not in loader, defined to show Dispatch icon instead
+            if A.Eviscerate:IsReady(unitID) then
+                return A.Eviscerate:Show(icon)
+            end
 			end
 		end
         local function ST()
@@ -954,13 +965,15 @@ A[3] = function(icon)
             if A.BladeFlurry:IsReady(unitID, true) and GetToggle(2, "AoE") and inAoE and (not A.IsInPvP or not EnemyTeam():IsBreakAble(12)) and EightYardTTD > 4 and Unit(player):HasBuffs(A.BladeFlurry.ID) <= 2 and (not GetToggle(1, "BossMods") or inCombat) then
                 return A.BladeFlurry:Show(icon)
             end
-		   --MFD (also in CDs)
             if MFD()
                 then return true
             end
             if A.GhostlyStrike:IsReady(unitID) and Player:ComboPointsDeficit() >= 1 + extraBSCP then
                 return A.GhostlyStrike:Show(icon)
             end
+            if A.Shiv:IsReady(unitID) and A.TinyToxicBlade:HasLegendaryCraftingPower() and Player:ComboPointsDeficit() >= 1 + extraBSCP then
+                return A.Shiv:Show(icon)
+            end 
             --Use Spesis Stealth buff on Ambush, Pool energy for Ambush
             if Unit(player):HasBuffs(A.SepsisStealth.ID) ~= 0 and inMelee and Player:ComboPointsDeficit() >= 1 then
                 if A.Ambush:IsReadyByPassCastGCD(unitID) then
@@ -972,18 +985,26 @@ A[3] = function(icon)
                 end
             end
             --Builders
-		    --SBS (also in CDs)
+		   
+            --SBS (also in CDs)
             if BoneSpike()
                 then return true
             end
-			-- if Opportunity, PS for 1 CP +broadside+quickdraw
+
             if A.PistolShot:IsReady(unitID) and Unit(player):HasBuffs(A.Opportunity.ID) ~= 0 and not A.Ambush:IsReady(unitID) and
-            (Player:ComboPointsDeficit() >= 1 + boolnumber(A.QuickDraw:IsTalentLearned()) + extraBSCP) then
-                return A.PistolShot:Show(icon)
+                ((Player:EnergyDeficit() > (Player:EnergyRegen()+10) or Player:ComboPointsDeficit()<=1+extraBSCP or A.QuickDraw:IsTalentLearned()) --"Use Pistol Shot with Opportunity if Combat Potency won't overcap energy, when it will exactly cap CP, or when using Quick Draw" );
+                or
+                (Unit(player):HasBuffs(A.GreenskinsWickers.ID) ~= 0 or Unit(player):HasBuffs(A.ConcealedBlunderbuss.ID) ~= 0)) -- Use Pistol Shot with Opp proc and PS legendaries
+                then
+                    return A.PistolShot:Show(icon)
             end
-			--GCD check added to prevent SS spell queuing since it is lowest priority
-            if A.SinisterStrike:IsReady(unitID) and GetCurrentGCD() <= 0.100 then --
+            -- I ran some sims changing the PS logic to include Non Opportunity PS and it was always a DPS loss
+            if A.SinisterStrike:IsReady(unitID) then
                 return A.SinisterStrike:Show(icon)
+            end
+            --Gogue is a free builder with Dirty Tricks learned
+            if A.Gouge:IsReady(unitID) and A.DirtyTricks:IsTalentLearned() and (Player:ComboPointsDeficit() >= 1 + extraBSCP) then
+                return A.Gouge:Show(icon)
             end
             --In combat ranged GCD filler
             if A.PistolShot:IsReady(unitID) and Player:Energy() >=90 and Unit(unitID):HealthPercent() < 100 and not inMelee then
@@ -1007,14 +1028,11 @@ A[3] = function(icon)
         if isBurst and (Player:GetStance() == 2 or (LastPlayerCastID == 1856 and Player:GetStance() ~= 1)) and StealthCDs() then return true end
         if Unit(player):HasBuffs(A.Stealth.ID) == 0 and Unit(player):HasBuffs(A.Vanish.ID) == 0 then
             -- CDs
-            if CDs() and isBurst then return true
-            end
+            if isBurst and CDs() then return true end
             -- FINISHERS
-            if Finishers() then return true
-            end
+            if Finishers() then return true end
             --Single Target
-            if ST() and LastPlayerCastID ~= 1856 then return true
-            end
+            if LastPlayerCastID ~= 1856 and ST() then return true end
             -- GiftofNaaru
             if A.GiftofNaaru:AutoRacial(player) and Unit(player):TimeToDie() < 10 then
                 return A.GiftofNaaru:Show(icon)
@@ -1033,14 +1051,14 @@ A[3] = function(icon)
 	if A.SummonSteward:IsReady(player) and GetItemCount(177278) < 1 and Player:GetStance() == 0  and Unit(player):CombatTime() == 0 and not IsMounted() then --and Unit(player):HasBuffs(A.Soulshape.ID) == 0 apparently the wow API is shit and soulshape is also getstance == 2
 		return A.SummonSteward:Show(icon)
 	end
-    --Attempt to stop recasts of stealth/poisons by waiting for two times ping after a cast is over
+    --Attempt to stop recasts of stealth/poisons by waiting for 4 times ping after a cast is over
     if  Player:IsCasting() then
         Temp.CastStartTime[1] = TMW.time
-    elseif TMW.time - (Temp.CastStartTime[1] or 0) < (2*A.GetPing()) then
+    elseif TMW.time - (Temp.CastStartTime[1] or 0) < (4*A.GetPing()) then
         return true
     end
     --OOC Stealth
-    if GetToggle(2, "OOCStealth") and A.Stealth:IsReady(unitID, true) and A.Stealth:IsLatenced(GetGCD() + 0.5) and Player:GetStance() == 0 and Unit(player):CombatTime() == 0 and not IsMounted() then --and Unit(player):HasBuffs(A.Soulshape.ID) == 0 apparently the wow API is shit and soulshape is also getstance == 2
+    if GetToggle(2, "OOCStealth") and A.Stealth:IsReady(unitID, true) and not IsResting() and  Player:GetStance() == 0 and Unit(player):CombatTime() == 0 and not IsMounted() then --and Unit(player):HasBuffs(A.Soulshape.ID) == 0 apparently the wow API is shit and soulshape is also getstance == 2
         return A.Stealth:Show(icon)
     end
     --Poisons use UI settings to check if poison selected is ready, already applied and ooc

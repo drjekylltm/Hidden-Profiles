@@ -54,7 +54,7 @@ KeepTarget	= {
     [334757] = false, --Shades of Bargast --Castle Nathria
     [165560] = false, --Gormling Larva --Mists
     [164363] = false, --Undying Stonefiend --HoA
-    --[] = false, --
+    [176581] = false, --Spiked Ball --SoD Painsmith
     --[] = false, --
     --[] = false, --
     --[] = false, --
@@ -71,6 +71,8 @@ IgnoreNameplates = {
     [163618] = false, --Zolramus Necromancer --NW
     [163157] = false, --Amarth --NW
     [169498] = false, --Plague Bomb, --PF
+    [176581] = false, --Spiked Ball --SoD Painsmith
+    [176523] = false, --Painsmith --SoD Painsmith
 }
 
 --this table is used to identify casts that are a cast followed by a channel and we only want to interrupt the channel
@@ -252,6 +254,16 @@ Factory[4].RyanInterrupts = StdUi:tGenerateMinMax({
             [357188] = { useKick = true, useCC = false, useRacial = false    }, --Double Technique          Kick
             [347150] = { useKick = true, useCC = false, useRacial = false    }, --Triple Technique          Kick
             [358131] = { useKick = true, useCC = false, useRacial = false    }, --Lightning Nova            Kick
+            --Sanctum of Domination
+            [350283] = { useKick = true, useCC = false, useRacial = false    }, -- Kick Soulful Blast
+            [350286] = { useKick = true, useCC = false, useRacial = false    }, -- Kick Song of Dissolution
+            [351779] = { useKick = true, useCC = false, useRacial = false    }, -- Kick    --Agonizing Nova
+             
+
+
+
+
+
             --[[ Templates
             [] = { useKick = false, useCC = false, useRacial = false}    , -- Block
             [] = { useKick = true, useCC = true, useRacial = true    }, -- Kick+CC

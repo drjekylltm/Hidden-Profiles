@@ -164,39 +164,18 @@ L.TRINKETDEFENSIVE                                    = {
     enUS = "Protection Trinkets\nHealth Percent (Self)",
     ruRU = "Аксессуары Защиты\nЗдоровье Процент (Свое)",
 }
-L.EarthElemental                                            = {
-    enUS = S.EarthElemental .. "\nUse on bosses only\n",
-}
-L.FireElemental                                            = {
-    enUS = S.FireElemental .. "\nUse on bosses only\n",
-}
-L.Stormkeeper                                            = {
-    enUS = S.Stormkeeper .. "\nUse on bosses only\n",
-}
-L.FeralSpirits                                            = {
-    enUS = S.FeralSpirits .. "\nUse on bosses only\n",
-}
-L.Bloodlust                                            = {
-    enUS = S.Bloodlust .. "\nUse on bosses only\n",
-}
+
+
 
 local SliderMarginOptions = { margin = { top = 10 } }
 local LayoutConfigOptions = { gutter = 6, padding = { left = 5, right = 5 } }
 A.Data.ProfileEnabled[A.CurrentProfile]             = true
 A.Data.ProfileUI                                     = {
-    DateTime = "v10.2.1 (30.6.2021) #EnemyTeams",
+    DateTime = "v11 (11.7.2021) #Sub Christening",
     [2] = {
         [ACTION_CONST_ROGUE_SUBTLETY] = {
             LayoutOptions = LayoutConfigOptions,
             {
-                {
-                    E                 = "Checkbox",
-                    DB                 = "mouseover",
-                    DBV             = true,
-                    L                 = L.MOUSEOVER,
-                    TT                 = L.MOUSEOVERTT,
-                    M                 = {},
-                },
                 {
                     E                 = "Checkbox",
                     DB                 = "AoE",
@@ -248,6 +227,18 @@ A.Data.ProfileUI                                     = {
                     },
                     TT = {
                         ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",
+                    },
+                    M                 = {},
+                },
+                {
+                    E               = "Checkbox",
+                    DB              = "usePriorityRotation",
+                    DBV             = false,
+                    L = {
+                        ANY = "Use Priority Rotation",
+                    },
+                    TT = {
+                        ANY = "Use Priority Rotation\n\nRight click: Create macro",
                     },
                     M                 = {},
                 },
@@ -622,18 +613,14 @@ A.Data.ProfileUI                                     = {
             LayoutOptions = LayoutConfigOptions,
              {
                 {
-                    E = "Dropdown",
-                    OT = {
-                        { text = "Melee Only" , value = 5 },
-                        { text = "20 Yards" , value = 20 },
-                    },
+                    E = "Checkbox",
                     DB = "BladeRushRange",
-                    DBV = 20,
+                    DBV = true,
                     L = {
-                        ANY = "Blade Rush Max Range",
+                        ANY = A.GetSpellInfo(271877) .. " in Melee Only",
                     },
                     TT = {
-                        ANY = "Select the range to use Blade Rush\n\nRight click: Create macro",
+                        ANY = "Limit the range of " .. A.GetSpellInfo(271877) .."\n\nRight click: Create macro",
                     },
                     M = {},
                 },
