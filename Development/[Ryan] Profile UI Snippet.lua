@@ -171,7 +171,7 @@ local SliderMarginOptions = { margin = { top = 10 } }
 local LayoutConfigOptions = { gutter = 6, padding = { left = 5, right = 5 } }
 A.Data.ProfileEnabled[A.CurrentProfile]             = true
 A.Data.ProfileUI                                     = {
-    DateTime = "v11 (11.7.2021) #Sub Christening",
+    DateTime = "v11.2 (17.7.2021) #I Know CC's",
     [2] = {
         [ACTION_CONST_ROGUE_SUBTLETY] = {
             LayoutOptions = LayoutConfigOptions,
@@ -191,6 +191,19 @@ A.Data.ProfileUI                                     = {
                     L                 = L.OOCStealth,
                     TT                 = L.OOCStealthTT,
                     M                 = {},
+                },
+                {
+                    E = "Checkbox",
+
+                    DB = "ShadowstrikeRange",
+                    DBV = true,
+                    L = {
+                        ANY = A.GetSpellInfo(185438) .. " In \nMelee Only",
+                    },
+                    TT = {
+                        ANY = "limit" .. A.GetSpellInfo(185438) .. "\n\nRight click: Create macro",
+                    },
+                    M = {},
                 },
             },
             {
@@ -250,22 +263,7 @@ A.Data.ProfileUI                                     = {
                 },
             },--]]
             {
-                {
-                    E = "Dropdown",
-                    OT = {
-                        { text = "Melee Only" , value = 5 },
-                        { text = "25 Yards" , value = 25 },
-                    },
-                    DB = "ShadowstrikeRange",
-                    DBV = 25,
-                    L = {
-                        ANY = "Shadowstrike Max Range",
-                    },
-                    TT = {
-                        ANY = "Select the range to use Shadowstrike\n\nRight click: Create macro",
-                    },
-                    M = {},
-                },
+
                 {
                     E = "Dropdown",
                     OT = {
@@ -283,6 +281,7 @@ A.Data.ProfileUI                                     = {
                     },
                     M = {},
                 },
+                --[[
                 {
                     E = "Dropdown",
                     OT = {
@@ -291,7 +290,7 @@ A.Data.ProfileUI                                     = {
                         { text = "Off", value = 0 },
                     },
                     DB = "VanishSetting",
-                    DBV = 0,
+                    DBV = 2,
                     L = {
                         ANY = "Vanish + Ambush Usage",
                     },
@@ -300,6 +299,7 @@ A.Data.ProfileUI                                     = {
                     },
                     M = {},
                 },
+                --]]
             },
 			{
 
@@ -625,6 +625,18 @@ A.Data.ProfileUI                                     = {
                     M = {},
                 },
                 {
+                    E = "Checkbox",
+                    DB = "offensiveGouge",
+                    DBV = false,
+                    L = {
+                        ANY = A.GetSpellInfo(1776) .. " offensively\nWith " .. A.GetSpellInfo(108216),
+                    },
+                    TT = {
+                        ANY = "With " .. A.GetSpellInfo(108216) .. " use " .. A.GetSpellInfo(1776) .. "\nTo generate CP\n\nRight click: Create macro",
+                    },
+                    M = {},
+                },
+                {
                     E = "Dropdown",
                     OT = {
                         { text = "Manual Open", value = "OFF" },
@@ -753,18 +765,7 @@ A.Data.ProfileUI                                     = {
                     TT                 = L.REBTETT,
                     M                 = {},
                 },
-                {
-                    E                 = "Checkbox",
-                    DB                 = "ATInterrupt",
-                    DBV             = true,
-                    L = {
-                        ANY = "Auto Target\nTo Interrupt",
-                    },
-                    TT = {
-                        ANY = "Requires Auto Target\nSwap Targets to Interrupt\n\nRight click: Create macro",
-                    },
-                    M                 = {},
-                },
+
             },
             {
                 {
@@ -788,6 +789,18 @@ A.Data.ProfileUI                                     = {
                     },
                     TT = {
                         ANY = "Target Enemy based on time to die for MFD\n\nRight click: Create macro",
+                    },
+                    M                 = {},
+                },
+                {
+                    E                 = "Checkbox",
+                    DB                 = "ATInterrupt",
+                    DBV             = true,
+                    L = {
+                        ANY = "Auto Target\nTo Interrupt",
+                    },
+                    TT = {
+                        ANY = "Requires Auto Target\nSwap Targets to Interrupt\n\nRight click: Create macro",
                     },
                     M                 = {},
                 },

@@ -283,7 +283,7 @@ local function EchoingBuffMatch()
             return true end
 end
 local function ReTabTarget()
-    if Unit(player):CombatTime() > 0  and ValidKeeptarget("target") and MultiUnits:GetByRange(5) >= 1 and
+    if Unit(player):CombatTime() > 0  and not IgnoreNameplates[select(6, Unit("target"):InfoGUID())] and MultiUnits:GetByRange(5) >= 1 and
 
     ((not Unit("target"):IsNameplateAny()) or (Unit("target"):GetRange() > 20))
     then 
@@ -334,7 +334,7 @@ A[2] = function(icon)
     
     if unitID then 
         local castLeft, _, _, _, notKickAble = Unit(unitID):IsCastingRemains()
-        if castLeft > 0 then 
+        if castLeft > A.GetPing() then 
             if not notKickAble and A.Kick:IsReady(unitID, nil, nil, true) and A.Kick:AbsentImun(unitID, Temp.TotalAndPhysKick, true) then
                 return A.KickGreen:Show(icon) 
             end 
@@ -371,7 +371,7 @@ A[3] = function(icon)
         if Unit(unitID):IsDead() then return end
         if Unit(unitID):HasDeBuffs("BreakAble") > 0 and Unit(player):CombatTime() == 0 then return end --Stop Rotation if Target is sapped and OOC
         if UnitCanAttack(player, unitID) == false then return end --Stop Rotation if Target can not attack back (yellow enemies)
-        if Unit(player):HasBuffs(A.Vanish.ID) ~= 0 and GetToggle(2, "VanishSetting") == 0 then return end  --Stop Rotation if Vanish is set to off
+        --if Unit(player):HasBuffs(A.Vanish.ID) ~= 0 and GetToggle(2, "VanishSetting") == 0 then return end  --Stop Rotation if Vanish is set to off
         if IsMounted() then return end  --Stop Rotation if Mounted. Action has check for this but can lag after stealthing
         local isBurst = BurstIsON(unitID) -- @boolean
         local inMelee = A.Kick:IsInRange(unitID) -- @boolean
@@ -386,14 +386,13 @@ A[3] = function(icon)
             return A.Stealth:Show(icon)
         end
         --Shiv Enrages
-        if A.Shiv:IsReady(unitID) and Unit(player):HasBuffs(A.NumbingPoison.ID) ~= 0 and Action.AuraIsValid(unitID, "UseExpelEnrage", "Enrage") then
+        if A.Shiv:IsReady(unitID) and Action.AuraIsValid(unitID, "UseExpelEnrage", "Enrage") then
             return A.Shiv:Show(icon)
         end 
         -- Purge
         if A.ArcaneTorrent:AutoRacial(unitID) then 
             return A.ArcaneTorrent:Show(icon)
         end 
-
 ---------------------------------------------------------------------------------------------
 --Target Specific Logic (these if statements are run first and ignore all rotational logic)--
 ---------------------------------------------------------------------------------------------
@@ -439,9 +438,6 @@ A[3] = function(icon)
 ------------------------------
 --END Target Specific Logic --
 ------------------------------
-
-
-
 ------------------------------------------
 --Function Definitions                  --
 ------------------------------------------
@@ -449,15 +445,16 @@ A[3] = function(icon)
             --returns @number
             --how many seconds player is from target. GetCurrentSpeed returns percentage of speed from base 7 yards per second
             --1 Second == Melee Range
+            --0 Seconds == Ontop of target
             local _, min_range				= Unit("target"):GetRange()
             local timefromtarget = ((min_range+5)/((Unit("player"):GetCurrentSpeed()+ 0.000000001) /100*7))
             return timefromtarget
         end
         TimeOnTarget = A.MakeFunctionCachedStatic(TimeOnTarget)
 	    local function MFDSnipe()
-			if MultiUnits:GetByRange(15) >= 2 and Player:ComboPointsDeficit() >= 4 and Unit("player"):CombatTime() > 0 and GetCurrentGCD() ~= 0 and ValidKeeptarget(unitID) then
+			if MultiUnits:GetByRange(15) >= 2 and Player:ComboPointsDeficit() >= 4 and Unit("player"):CombatTime() > 0 and GetCurrentGCD() ~= 0 and not IgnoreNameplates[npc_id] then
 				for val in pairs(ActiveUnitPlates) do
-					if 	A.MarkedForDeath:IsReady(unitID) and Unit(val):TimeToDie() < Unit(unitID):TimeToDie() and ValidAutotarget(val) and
+					if 	A.MarkedForDeath:IsReady(unitID) and Unit(val):TimeToDie() < Unit(unitID):TimeToDie() and not KeepTarget[select(6, Unit(val):InfoGUID())] and
 						((UnitCanAttack("player", val) and Unit(val):GetRange() <=15 and UnitThreatSituation("player", val) ~= nil and not Unit(val):IsTotem())	or Unit(val):IsDummy()) then
 							return A:Show(icon, ACTION_CONST_AUTOTARGET)
 					end
@@ -477,88 +474,126 @@ A[3] = function(icon)
         end
         MFD = A.MakeFunctionCachedStatic(MFD)
         local function Interrupts()
-            local inInstance = IsInAnInstance[A.InstanceInfo.ID]
-	        local unitIDinterrupt = "none"
-            local stopbeforechannel = true
-			if IsUnitEnemy("mouseover") then
-				unitIDinterrupt = "mouseover"
-			elseif IsUnitEnemy("target") then
-				unitIDinterrupt = "target"
-			end
-            local Slidermin, Slidermax = Action.InterruptGetSliders("RyanInterrupts")
-
-            local function DetermineInterrupts(unit)
-                --Return Vars used for each interrupt so logic is always the same for interrupt and autotargeting  
-                local kick = castLeft > (2*A.GetPing()) and A.Kick:IsReady(unit) and not notKickAble  and A.AbsentImun(nil, unit, Temp.TotalAndPhysKick) 
-                local cheapshot = castLeft > (2*A.GetPing()) and A.CheapShot:IsReady(unit)  and Unit(unit):GetDR("stun") > 0 and not Unit(unit):IsBoss() and Unit(unit):HasBuffs(A.Sanguine.ID) == 0 and A.CheapShot:AbsentImun(unit, Temp.TotalAndPhysAndCC)
-                local kidneyshot = castLeft > (2*A.GetPing()) and A.KidneyShot:IsReady(unit)  and Player:ComboPoints() >= 1 and Unit(unit):GetDR("stun") > 0 and not Unit(unit):IsBoss() and Unit(unit):HasBuffs(A.Sanguine.ID) == 0 and A.KidneyShot:AbsentImun(unit, Temp.TotalAndPhysAndCC)
-                local quakingpalm = castLeft > (2*A.GetPing()) and A.QuakingPalm:IsReady(unit)  and Unit(unit):GetDR("incapacitate") > 0 and not Unit(unit):IsBoss() and A.QuakingPalm:AbsentImun(unit, Temp.TotalAndPhysAndCC)
-                local blind = castLeft > (2*A.GetPing()) and A.Blind:IsReady(unit)  and Unit(unit):GetDR("disorient") > 0 and not Unit(unit):IsBoss() and A.Blind:AbsentImun(unit, Temp.TotalAndPhysAndCC)
-                return kick, cheapshot, kidneyshot, quakingpalm, blind
+            local inInstance = IsInAnInstance[A.InstanceInfo.ID]													
+            local unitIDinterrupt = "none"    
+            local useKick, useCC, useRacial, notKickAble, castLeft              
+            local function KickAble(unit)
+                if A.AbsentImun(nil, unit, Temp.TotalAndPhysKick) and A.Kick:IsReady(unit) then
+                    return true
+                end
+            end    
+            local function CheapShotAble(unit)
+                if (Player:GetStance() ~= 0) and A.CheapShot:IsReady(unit) and A.CheapShot:AbsentImun(unit, Temp.TotalAndPhysAndCC) and Unit(unit):GetDR("stun") > 0 and not Unit(unit):IsBoss() and Unit(unit):HasBuffs(A.Sanguine.ID) == 0 then
+                    return true
+                end
             end
-            DetermineInterrupts = A.MakeFunctionCachedDynamic(DetermineInterrupts) --should be faster dynamic cached since the number of nameplates is unknown
-            if A.GetToggle(2, "InterruptList") and inInstance then--uses ryan interrupt table in SL dungeons and raid instance IDs
-                useKick, useCC, useRacial, notKickAble, castLeft, castDoneTime = InterruptIsValid(unitIDinterrupt, "RyanInterrupts", true)
+            local function KidneyShotAble(unit)
+                if A.KidneyShot:IsReady(unit) and A.KidneyShot:AbsentImun(unit, Temp.TotalAndPhysAndCC) and Player:ComboPoints() >= 1 and Unit(unit):GetDR("stun") > 0 and not Unit(unit):IsBoss() and Unit(unit):HasBuffs(A.Sanguine.ID) == 0 then
+                    return true
+                end
+            end
+            local function QuakingPalmAble(unit)
+                if  A.QuakingPalm:IsReady(unit) and A.QuakingPalm:AbsentImun(unit, Temp.TotalAndPhysAndCC) and Unit(unit):GetDR("incapacitate") > 0 and not Unit(unit):IsBoss() then
+                    return A.QuakingPalm:Show(icon)
+                end
+            end
+            local function BlindAble(unit)
+                if A.Blind:IsReady(unit) and A.Blind:AbsentImun(unit, Temp.TotalAndPhysAndCC) and Unit(unit):GetDR("disorient") > 0 and not Unit(unit):IsBoss() then
+                    return A.Blind:Show(icon)
+                end
+            end
+            --All kick/cc macros require mouseover checks, so our logic mustmatch here to prevent missing due to mouse location
+            if IsUnitEnemy("mouseover") then
+                unitIDinterrupt = "mouseover"
+            elseif IsUnitEnemy("target") then
+                unitIDinterrupt = "target"
+            end
+            --uses ryan interrupt table in SL dungeons and raid instance IDs
+            if A.GetToggle(2, "InterruptList") and inInstance then
+                useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(unitIDinterrupt, "RyanInterrupts", true)
             else
-                useKick, useCC, useRacial, notKickAble, castLeft, castDoneTime = InterruptIsValid(unitIDinterrupt)
+                useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(unitIDinterrupt)
             end
+            --Check if target is known to not be CCable
+            if (useCC or useRacial) and IsNotCCAble[npc_id] then
+                useCC = false
+                useRacial = false
+            end
+            --Check if the cast is a channel and we should wait for the channel to interrupt
+            local _, _, SpellID, _ ,_ , IsChanneling = Unit(unitIDinterrupt):IsCastingRemains()
+            if Channels[SpellID] and not IsChanneling then
+                useKick = false
+                useCC = false
+                useRacial = false
+            end
+            --Interrupt as appropriate based on interrupt table and CC knowledge   
             if useKick or useCC or useRacial then
-                local kickCanBeUsed, cheapshotCanBeUsed, kidneyshotCanBeUsed, quakingpalmCanBeUsed, blindCanBeUsed = DetermineInterrupts(unitIDinterrupt)
-                local CastTimeRemaining, Percentcast, SpellID, _ ,_ , IsChanneling = Unit(unitIDinterrupt):IsCastingRemains()
-                --this is personal check for my Action install, if you're reading this and want to know why i check this DM me and i'll explain it. 
-                local percenttokick = Percentcast > Slidermin
-                --Var used for each interrupt so logic is always the same for interrupt and autotargeting
-                --This checks the SpellID of the cast against my table to decide to wait for a channel instead of interrupting the first cast
-                --useful for abilities that should be interrupted during the channel to make it go on CD instead of enemy spamming it
-                if Channels[SpellID] then
-                    stopbeforechannel = IsChanneling 
-                 end
-
                 -- useKick
-                if useKick and percenttokick and stopbeforechannel and kickCanBeUsed then
+                if useKick and castLeft > A.GetPing() and not notKickAble  and KickAble(unitIDinterrupt) then
                     return A.Kick:Show(icon)
                 end
                 -- useCC / useRacial
-                if (not useKick or notKickAble or A.Kick:GetCooldown() > 0) and percenttokick and stopbeforechannel and Unit(unitIDinterrupt):HasBuffs(A.Inspired.ID) == 0 then
-                    if useCC and cheapshotCanBeUsed then
+                if (not useKick or notKickAble or A.Kick:GetCooldown() > castLeft + A.GetPing()) and Unit(unitIDinterrupt):HasBuffs(A.Inspired.ID) == 0 then
+                    if useCC and CheapShotAble(unitIDinterrupt) then
                         return A.CheapShot:Show(icon)
-                    elseif useCC and kidneyshotCanBeUsed then
+                    end
+                    if useCC and KidneyShotAble(unitIDinterrupt) then
                         return A.KidneyShot:Show(icon)
-                    elseif useRacial and quakingpalmCanBeUsed then
+                    end
+                    if useRacial and QuakingPalmAble(unitIDinterrupt) then
                         return A.QuakingPalm:Show(icon)
-                    elseif useCC and blindCanBeUsed then
+                    end
+                    if useCC and BlindAble(unitIDinterrupt) then
                         return A.Blind:Show(icon)
                     end
                 end
             end
-			--Auto Targeting Interrupts
-			if Action.GetToggle(1, "AutoTarget") and A.GetToggle(2, "ATInterrupt") and ((not useKick and not useCC and not useRacial) or not inMelee) and ValidKeeptarget(unitID) and GetCurrentGCD() ~= 0 then  -- and Unit("player"):CombatTime() > 0 i dont think i care if we are in combat for interrupt auto targeting
-                -- removed and inAoE check from above since its possible target is far and nameplate is in melee, i only need one nameplate in melee to check for kicks
+            --Auto Targeting Interrupts
+            if Action.GetToggle(1, "AutoTarget") and A.GetToggle(2, "ATInterrupt") 
+            and (not useKick or notKickAble or A.Kick:GetCooldown() > castLeft + A.GetPing()) -- Current Target does not need interrupted
+            and not useCC -- Current Target does not need interrupted
+            and not useRacial -- Current Target does not need interrupted
+            and GetCurrentGCD() ~= 0 --prevent getting stuck auto targeting
+            and not IgnoreNameplates[npc_id]  --Target is not something we swap off
+            then                                                                                                                                                      
                 for val in pairs(ActiveUnitPlates) do
                     if A.GetToggle(2, "InterruptList") and inInstance then--uses ryan interrupt table in SL dungeons and raid instance IDs
-                        useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(val, "RyanInterrupts", true)
+                    useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(val, "RyanInterrupts", true)
                     else
                         useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(val)
                     end
-                    local CastTimeRemaining, Percentcast, SpellID, _ ,_ , IsChanneling = Unit(val):IsCastingRemains()
-                    --this is personal check for my Action install, if you're reading this and want to know why i check this DM me and i'll explain it. 
-                    local percenttokick = Percentcast > Slidermin
-                    --redfine interrupts for each nameplate
-                    local kickCanBeUsed, cheapshotCanBeUsed, kidneyshotCanBeUsed, quakingpalmCanBeUsed, blindCanBeUsed = DetermineInterrupts(val)
-                    if percenttokick and Unit(val):HasBuffs(A.Inspired.ID) == 0 and ValidAutotarget(val)
-                        and ((UnitCanAttack("player", val) and A.Kick:IsInRange(val) and not Unit(val):IsTotem()) or Unit(val):IsDummy()) 
-                        and ((useKick and kickCanBeUsed)
-                            or (useCC and cheapshotCanBeUsed)
-                            or (useCC and kidneyshotCanBeUsed)
-                            or (useRacial and quakingpalmCanBeUsed)
-                            or (useCC and blindCanBeUsed))
+                    if useKick or useCC or useRacial then
+                        --Check if the nameplate can even be CC'd, if not, correct useCC and useRacial
+                        local _, _, _, _, _, npc_id_val 		= Unit(val):InfoGUID()
+                        if (useCC or useRacial) and IsNotCCAble[npc_id_val] then
+                            useCC = false
+                            useRacial = false
+                        end
+                        --Check for spells that we want to stop the channel not the cast
+                        local _, _, SpellID, _ ,_ , IsChanneling = Unit(val):IsCastingRemains()
+                        if Channels[SpellID] and not IsChanneling then
+                            useKick = false
+                            useCC = false
+                            useRacial = false
+                        end
+                        if Unit(val):HasBuffs(A.Inspired.ID) == 0
+                            and not KeepTarget[npc_id_val]
+                            and UnitCanAttack("player", val) 
+                            and A.Kick:IsInRange(val) 
+                            and UnitThreatSituation("player", val) ~= nil
+                            and  
+                            ((useKick and castLeft > A.GetPing() and not notKickAble and KickAble(val))
+                            or (useCC and CheapShotAble(val))
+                            or (useCC and KidneyShotAble(val))
+                            or (useRacial and QuakingPalmAble(val))
+                            or (useCC and BlindAble(val)))                                                   
                             then
                                     return A:Show(icon, ACTION_CONST_AUTOTARGET)
-					end
-				end
-			end
+                        end
+                    end
+                end
+            end
         end
-
         local function Defensives()
             if Unit(player):IsTankingAoE(10) and A.TricksOfTheTrade:IsReady("focus") then
                 return A.TricksOfTheTrade:Show(icon)
@@ -574,7 +609,7 @@ A[3] = function(icon)
                         -- TTD
                         Unit(player):TimeToDieX(25) < 2 or (A.IsInPvP and Unit(player):HealthPercent() <= 40 and (Unit(player):UseDeff() or (Unit(player, 5):HasFlags() and Unit(player):GetRealTimeDMG() > 0 and Unit(player):IsFocused() )))) and Unit(player):HasBuffs("DeffBuffs", true) == 0) or
                 ( -- Custom
-                    Evasion < 100 and Unit(player):HealthPercent() <= Evasion))
+                    Evasion < 100 and Unit(player):HealthPercent() < Evasion))
             then
                 return A.Evasion:Show(icon)
             end
@@ -586,7 +621,7 @@ A[3] = function(icon)
                     -- Magic Damage still appear
                     Unit(player):GetRealTimeDMG(4) > 0 and Unit(player):HasBuffs("DeffBuffsMagic") == 0) or
                 ( -- Custom
-                    CloakofShadows < 100 and Unit(player):HealthPercent() <= CloakofShadows))
+                    CloakofShadows < 100 and Unit(player):HealthPercent() < CloakofShadows))
             then
                 return A.CloakofShadows:Show(icon)
             end
@@ -620,7 +655,7 @@ A[3] = function(icon)
 			end
 			-- CrimsonVial
             local CrimsonVial = GetToggle(2, "CrimsonVial")
-            if CrimsonVial >= 0 and A.CrimsonVial:IsReady(player) and Unit(player):HealthPercent() <= CrimsonVial and Unit(player):HasBuffs(A.CrimsonVial.ID) == 0 and Unit(player):HasDeBuffs(A.GluttonousMiasma.ID) == 0 then
+            if CrimsonVial >= 0 and A.CrimsonVial:IsReady(player) and Unit(player):HealthPercent() < CrimsonVial and Unit(player):HasBuffs(A.CrimsonVial.ID) == 0 and Unit(player):HasDeBuffs(A.GluttonousMiasma.ID) == 0 then
                 return A.CrimsonVial:Show(icon)
             end
             -- Stoneform (Self Dispel)
@@ -628,616 +663,623 @@ A[3] = function(icon)
                 return A.Stoneform:Show(icon)
             end
         end
-
-            local function CDs()
-                local Item = UseItems(unitID)
-                if Item and inMelee  and (Unit(player):HasBuffs(A.SymbolsOfDeath.ID, false, true) ~= 0 or Unit(unitID):TimeToDie() <20) then --prevent all items in stealth and save them for Symbols windows
-                    return Item:Show(icon)
-                end
-                --cds->add_action( this, "Shadow Dance", "use_off_gcd=1,if= not buff.shadow_dance.up and buff.shuriken_tornado.up and buff.shuriken_tornado.remains<=3.5", "Use Dance off-gcd before the first Shuriken Storm from Tornado comes in." );
-                if A.ShadowDance:IsReady(player)
-                and inMelee
-                and (Unit(unitID):TimeToDie() > 8 or Unit(unitID):IsBoss())
-                and
-                (
-                    Unit(player):HasBuffs(A.ShadowDanceBuff.ID) == 0 
-                and Unit(player):HasBuffs(A.ShurikenTornado.ID) ~= 0 
-                and Unit(player):HasBuffs(A.ShurikenTornado.ID) <=3.5
-                )
-                then
-                    return A.ShadowDance:Show(icon)
-                end
-                --cds->add_action( this, "Symbols of Death", "use_off_gcd=1,if=buff.shuriken_tornado.up and buff.shuriken_tornado.remains<=3.5", "(Unless already up because we took Shadow Focus) use Symbols off-gcd before the first Shuriken Storm from Tornado comes in." );
-                if A.SymbolsOfDeath:IsReady(player)
-                and inMelee 
-                and (Unit(unitID):TimeToDie() > 10 or Unit(unitID):IsBoss())
-                --and inCombat
-                and 
-                (
-                    Unit(player):HasBuffs(A.ShurikenTornado.ID) ~= 0 and Unit(player):HasBuffs(A.ShurikenTornado.ID) <=3.5
-                )
-                then
-                    return A.SymbolsOfDeath:Show(icon)
-                end
-                --cds->add_action( "flagellation,if=variable.snd_condition and  not stealthed.mantle and buff.symbols_of_death.up and combo_points>=5" );
-                --"not stealthed.mantle" in the SIMC APL, means not staelthed or vanished (buffs that give MA)
-                if A.Flagellation:IsReady(unitID)
+        local function CDs()
+            local Item = UseItems(unitID)
+            if Item and inMelee  and (Unit(player):HasBuffs(A.SymbolsOfDeath.ID, false, true) ~= 0 or Unit(unitID):TimeToDie() <20) then --prevent all items in stealth and save them for Symbols windows
+                return Item:Show(icon)
+            end
+            --cds->add_action( this, "Shadow Dance", "use_off_gcd=1,if= not buff.shadow_dance.up and buff.shuriken_tornado.up and buff.shuriken_tornado.remains<=3.5", "Use Dance off-gcd before the first Shuriken Storm from Tornado comes in." );
+            if A.ShadowDance:IsReady(player)
+            and inMelee
+            and (Unit(unitID):TimeToDie() > 8 or Unit(unitID):IsBoss())
+            and
+            (
+                Unit(player):HasBuffs(A.ShadowDanceBuff.ID) == 0 
+            and Unit(player):HasBuffs(A.ShurikenTornado.ID) ~= 0 
+            and Unit(player):HasBuffs(A.ShurikenTornado.ID) <=3.5
+            )
+            then
+                return A.ShadowDance:Show(icon)
+            end
+            --cds->add_action( this, "Symbols of Death", "use_off_gcd=1,if=buff.shuriken_tornado.up and buff.shuriken_tornado.remains<=3.5", "(Unless already up because we took Shadow Focus) use Symbols off-gcd before the first Shuriken Storm from Tornado comes in." );
+            if A.SymbolsOfDeath:IsReady(player)
+            and inMelee 
+            and (Unit(unitID):TimeToDie() > 10 or Unit(unitID):IsBoss())
+            --and inCombat
+            and 
+            (
+                Unit(player):HasBuffs(A.ShurikenTornado.ID) ~= 0 and Unit(player):HasBuffs(A.ShurikenTornado.ID) <=3.5
+            )
+            then
+                return A.SymbolsOfDeath:Show(icon)
+            end
+            --cds->add_action( "flagellation,if=variable.snd_condition and  not stealthed.mantle and buff.symbols_of_death.up and combo_points>=5" );
+            --"not stealthed.mantle" in the SIMC APL, means not staelthed or vanished (buffs that give MA)
+            if A.Flagellation:IsReady(unitID)
+            and
+            (
+            snd_condition 
+            and (Unit(player):HasBuffs(A.Stealth.ID) == 0 and Unit(player):HasBuffs(A.VanishStealth.ID) == 0)
+            and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0
+            and Player:ComboPoints() >= 5
+            )
+            then
+                return A.Flagellation:Show(icon)
+            end
+            --cds->add_action( this, "Vanish", "if=(runeforge.mark_of_the_master_assassin and combo_points.deficit<=1-talent.deeper_strategem.enabled or runeforge.deathly_shadows and combo_points<1) and buff.symbols_of_death.up and buff.shadow_dance.up and master_assassin_remains=0 and buff.deathly_shadows.down" );
+            if A.Vanish:IsReady(player)
+            and inMelee 
+            and inCombat
+            and
+            (
+                (A.MarkoftheMasterAssassin:HasLegendaryCraftingPower() and Player:ComboPointsDeficit() <= 1 - boolnumber(A.DeeperStratagem:IsTalentLearned()) or A.DeathlyShadows:HasLegendaryCraftingPower() and Player:ComboPoints() < 1) 
+                and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0  
+                and Unit(player):HasBuffs(A.ShadowDanceBuff.ID) ~= 0 
+                and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) == 0 
+                and Unit(player):HasBuffs(A.DeathlyShadows.ID) == 0
+            )
+            then
+                return A.Vanish:Show(icon)
+            end
+            --cds->add_action( "pool_resource,for_next=1,if=", "Pool for Tornado pre-SoD with ShD ready when not running SF." );
+            --cds->add_talent( this, "Shuriken Tornado", "if=energy>=60 and variable.snd_condition and cooldown.symbols_of_death.up and cooldown.shadow_dance.charges>=1 and ( not runeforge.obedience or debuff.flagellation.up) and combo_points<=2 and ( not buff.premeditation.up or spell_targets.shuriken_storm>4)", "Use Tornado pre SoD when we have the energy whether from pooling without SF or just generally." );
+            if A.ShurikenTornado:IsTalentLearned()
+                and GetToggle(2, "AoE")
                 and
                 (
                 snd_condition 
-                and (Unit(player):HasBuffs(A.Stealth.ID) == 0 and Unit(player):HasBuffs(A.VanishStealth.ID) == 0)
-                and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0
-                and Player:ComboPoints() >= 5
+                and A.SymbolsOfDeath:IsReady(player) 
+                and A.ShadowDance:GetSpellChargesFrac() >=1 
+                and (not A.Obedience:HasLegendaryCraftingPower() or Unit(unitID):HasDeBuffs(A.Flagellation.ID, true) ~= 0) 
+                and Player:ComboPoints() <= 2 
+                and (Unit(player):HasBuffs(A.Premeditation.ID) ~= 0 or MultiUnits:GetByRange(10) > 4)
                 )
                 then
-                    return A.Flagellation:Show(icon)
+                    if Player:Energy() < 60 
+                    and not A.ShadowFocus:IsTalentLearned()
+                        then 
+                            return A.PoolResource:Show(icon)
+                    end
+                    if A.ShurikenTornado:IsReady(unitID)
+                    then
+                        return A.ShurikenTornado:Show(icon)
+                    end
+            end
+            --cds->add_action( "serrated_bone_spike,cycle_targets=1,if=variable.snd_condition&!dot.serrated_bone_spike_dot.ticking&target.time_to_die>=21&(combo_points.deficit>=(cp_gain>?4))&!buff.shuriken_tornado.up&(!buff.premeditation.up|spell_targets.shuriken_storm>4)|fight_remains<=5&spell_targets.shuriken_storm<3" );
+            if A.SerratedBoneSpike:IsReady(unitID) 
+            and inCombat
+            and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) -- player is on the threat table somewhere (in combat with)
+            and not UnitCooldown:IsSpellInFly("player", A.SerratedBoneSpike.ID)-- this is Action check not APL
+                then
+                    --Bonepsike target missing buff
+                    if 
+                    snd_condition 
+                    and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0
+                    and Unit(unitID):TimeToDie() >= 21 
+                    and (Player:ComboPointsDeficit() >= (math.min((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1), 4)))
+                    and Unit(player):HasBuffs(A.ShurikenTornado.ID) == 0
+                    and (Unit(player):HasBuffs(A.Premeditation.ID) == 0 or MultiUnits:GetByRange(10) > 4) 
+                    or Unit(unitID):TimeToDie() <= 5 and MultiUnits:GetByRange(10) < 3
+                    then
+                        return A.SerratedBoneSpike:Show(icon)
+                    end
+                    --Bone Spike Targeting
+                    if 
+                    Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0  -- if target has SBS
+                    and Action.GetToggle(1, "AutoTarget")  --AutoTargetting is Enabled
+                    --and Action.GetToggle(2, "SBSTarget")  --SBS Targeting is enabled not currently implemented in Sub UI, may not implement ever TODO
+                    and not IgnoreNameplates[npc_id] --Target is something we can swap off
+                    and MultiUnits:GetByRange(15) >= 2 --There are 2 targets in Range
+                    then
+                        for val in pairs(ActiveUnitPlates) do
+                            if 
+                            (
+                                snd_condition 
+                                and Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0
+                                and Unit(val):TimeToDie() >= 21 
+                                and (Player:ComboPointsDeficit() >= (math.min((Player:GetDeBuffsUnitCount(A.SerratedBoneSpike.ID)+1), 4)))
+                                and Unit(player):HasBuffs(A.ShurikenTornado.ID) == 0
+                                and (Unit(player):HasBuffs(A.Premeditation.ID) == 0 or MultiUnits:GetByRange(10) > 4) 
+                                or Unit(val):TimeToDie() <= 5 and MultiUnits:GetByRange(10) < 3
+                            )
+                                -- end of APL checks, start of action checks
+                            and ValidAutotarget(val)
+                            and ((UnitCanAttack("player", val) and Unit(val):GetRange() <=15  and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) --We have threat or it is a dummy        
+                            then
+                                return A:Show(icon, ACTION_CONST_AUTOTARGET)
+                            end
+                        end
                 end
-                --cds->add_action( this, "Vanish", "if=(runeforge.mark_of_the_master_assassin and combo_points.deficit<=1-talent.deeper_strategem.enabled or runeforge.deathly_shadows and combo_points<1) and buff.symbols_of_death.up and buff.shadow_dance.up and master_assassin_remains=0 and buff.deathly_shadows.down" );
+            end
+            --cds->add_action( "sepsis,if=variable.snd_condition and combo_points.deficit>=1" );
+            if A.Sepsis:IsReady(unitID) 
+            and
+            (
+            snd_condition and Player:ComboPointsDeficit() >= 1
+            )
+            then
+                return A.Sepsis:Show(icon)
+            end	 
+            --cds->add_action( this, "Symbols of Death", "if=variable.snd_condition and (talent.enveloping_shadows.enabled or cooldown.shadow_dance.charges>=1) and ( not talent.shuriken_tornado.enabled or talent.shadow_focus.enabled or cooldown.shuriken_tornado.remains>2) and ( not covenant.venthyr or cooldown.flagellation.remains>10 or cooldown.flagellation.up and combo_points>=5)", "Use Symbols on cooldown (after first SnD) unless we are going to pop Tornado and do not have Shadow Focus." );
+            if A.SymbolsOfDeath:IsReady(player)
+            and (Unit(unitID):TimeToDie() > 10 or Unit(unitID):IsBoss())
+            and inMelee
+            and
+            (
+            snd_condition 
+            and (A.EnvelopingShadows:IsTalentLearned() or A.ShadowDance:GetSpellChargesFrac() >=1) 
+            and (not A.ShurikenTornado:IsTalentLearned() or A.ShadowFocus:IsTalentLearned() or A.ShurikenTornado:GetCooldown()>2) 
+            and (Player:GetCovenant() ~= 2 or A.Flagellation:GetCooldown() > 10 or A.Flagellation:IsReady(unitID) and Player:ComboPoints()>=5)
+            )
+            then
+                return A.SymbolsOfDeath:Show(icon)
+            end
+            --cds->add_talent( this, "Marked for Death", "line_cd=1.5,target_if=min:target.time_to_die,if=raid_event.adds.up and (target.time_to_die<combo_points.deficit or  not stealthed.all and combo_points.deficit>=cp_max_spend)", "If adds are up, snipe the one with lowest TTD. Use when dying faster than CP deficit or not stealthed without any CP." );
+            --cds->add_talent( this, "Marked for Death", "if=raid_event.adds.in>30-raid_event.adds.duration and combo_points.deficit>=cp_max_spend", "If no adds will die within the next 30s, use MfD on boss without any CP." );
+            if MFD()
+                then return true
+            end
+            --cds->add_action( this, "Shadow Blades", "if=variable.snd_condition and combo_points.deficit>=2 and (cooldown.symbols_of_death.remains<1 or buff.symbols_of_death.up or fight_remains<=20)" );
+            if A.ShadowBlades:IsReady(player)
+            and inMelee
+            and
+            (
+                snd_condition 
+                and Player:ComboPointsDeficit() >= 2 
+                and (A.SymbolsOfDeath:GetCooldown() < 1 or Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 or Unit(unitID):IsBoss() or Unit(unitID):TimeToDie() >= 21)
+            )
+            then
+                return A.ShadowBlades:Show(icon)
+            end
+            --cds->add_action( "echoing_reprimand,if=variable.snd_condition and combo_points.deficit>=2 and (variable.use_priority_rotation or spell_targets.shuriken_storm<=4 or runeforge.resounding_clarity)" );
+            if A.EchoingReprimand:IsReady(unitID) 
+            and
+            (
+                snd_condition 
+                and Player:ComboPointsDeficit() >= 2 
+                and (use_priority_rotation or MultiUnits:GetByRange(10) <= 4 or A.ResoundingClarity:HasLegendaryCraftingPower())
+            )
+            then
+                return A.EchoingReprimand:Show(icon)
+            end
+            --cds->add_talent( this, "Shuriken Tornado", "if=talent.shadow_focus.enabled and variable.snd_condition and buff.symbols_of_death.up and combo_points<=2 and ( not buff.premeditation.up or spell_targets.shuriken_storm>4)", "With SF, if not already done, use Tornado with SoD up." );
+            if A.ShurikenTornado:IsReady(unitID)
+            and GetToggle(2, "AoE")
+            and
+            (
+            A.ShadowFocus:IsTalentLearned() 
+            and snd_condition 
+            and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 
+            and Player:ComboPoints() <= 2 
+            and (Unit(player):HasBuffs(A.Premeditation.ID) == 0 or MultiUnits:GetByRange(10) > 4)
+            )
+            then
+                return A.ShurikenTornado:Show(icon)
+            end
+            --cds->add_action( this, "Shadow Dance", "if= not buff.shadow_dance.up and fight_remains<=8+talent.subterfuge.enabled" );
+            if A.ShadowDance:IsReady(player)
+            and inMelee
+            and (Unit(unitID):TimeToDie() > 8 or Unit(unitID):IsBoss())
+            and
+            (
+                Unit(player):HasBuffs(A.ShadowDanceBuff.ID) == 0 and Unit(unitID):TimeToDie() <= 8 + boolnumber(A.Subterfuge:IsTalentLearned())
+            )
+            then
+                return A.ShadowDance:Show(icon)
+            end
+            --I dont support Fleshcraft yet, but if i did, this is where it would go
+            --cds->add_action( "fleshcraft,if=(soulbind.pustule_eruption or soulbind.volatile_solvent) and energy.deficit>=30 and  not stealthed.all and buff.symbols_of_death.down" );
+            --I dont support Potions yet, but if i did, this is where it would go
+            --cds->add_action( potion_action );
+            --cds->add_action( "blood_fury,if=buff.symbols_of_death.up" );
+            if A.BloodFury:IsReady(unitID, true) and inMelee and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 then
+                return A.BloodFury:Show(icon)
+            end
+            --cds->add_action( "berserking,if=buff.symbols_of_death.up" );
+            if A.Berserking:IsReady(unitID, true) and inMelee and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 then
+                return A.Berserking:Show(icon)
+            end
+            --cds->add_action( "fireblood,if=buff.symbols_of_death.up" );
+            if A.Fireblood:IsReady(unitID, true) and inMelee and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 then
+                return A.Fireblood:Show(icon)
+            end
+            --cds->add_action( "ancestral_call,if=buff.symbols_of_death.up" );
+            if A.AncestralCall:IsReady(player) and inMelee and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 then 
+                return A.AncestralCall:Show(icon)
+            end 
+            --cds->add_action( "use_items,if=buff.symbols_of_death.up or fight_remains<20", "Default fallback for usable items: Use with Symbols of Death." );
+        end
+        local function StealthCooldowns()
+            local shd_combo_points 
+            --stealth_cds->add_action( "variable,name=shd_threshold,value=cooldown.shadow_dance.charges_fractional>=1.75", "Helper Variable" );
+            local shd_threshold = A.ShadowDance:GetSpellChargesFrac() >= 1.75
+
+
+
+
+            
+            --stealth_cds->add_action( this, "Vanish", "if=( not variable.shd_threshold or  not talent.nightstalker.enabled and talent.dark_shadow.enabled) and combo_points.deficit>1 and  not runeforge.mark_of_the_master_assassin", "Vanish if we are capping on Dance charges. Early before first dance if we have no Nightstalker but Dark Shadow in order to get Rupture up (no Master Assassin)." );
                 if A.Vanish:IsReady(player)
-                and GetToggle(2, "VanishSetting") == 2 
-                and inMelee 
-                and inCombat
                 and
                 (
-                    (A.MarkoftheMasterAssassin:HasLegendaryCraftingPower() and Player:ComboPointsDeficit() <= 1 - boolnumber(A.DeeperStratagem:IsTalentLearned()) or A.DeathlyShadows:HasLegendaryCraftingPower() and Player:ComboPoints() < 1) 
-                    and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0  
-                    and Unit(player):HasBuffs(A.ShadowDanceBuff.ID) ~= 0 
-                    and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) == 0 
-                    and Unit(player):HasBuffs(A.DeathlyShadows.ID) == 0
+                    (not shd_threshold or not A.Nightstalker:IsTalentLearned() and A.DarkShadow:IsTalentLearned()) 
+                    and Player:ComboPointsDeficit() > 1 
+                    and not A.MarkoftheMasterAssassin:HasLegendaryCraftingPower()
                 )
                 then
                     return A.Vanish:Show(icon)
                 end
-                --cds->add_action( "pool_resource,for_next=1,if=", "Pool for Tornado pre-SoD with ShD ready when not running SF." );
-                --cds->add_talent( this, "Shuriken Tornado", "if=energy>=60 and variable.snd_condition and cooldown.symbols_of_death.up and cooldown.shadow_dance.charges>=1 and ( not runeforge.obedience or debuff.flagellation.up) and combo_points<=2 and ( not buff.premeditation.up or spell_targets.shuriken_storm>4)", "Use Tornado pre SoD when we have the energy whether from pooling without SF or just generally." );
-                if A.ShurikenTornado:IsTalentLearned()
-                    and GetToggle(2, "AoE")
-                    and
-                    (
-                    snd_condition 
-                    and A.SymbolsOfDeath:IsReady(player) 
-                    and A.ShadowDance:GetSpellChargesFrac() >=1 
-                    and (not A.Obedience:HasLegendaryCraftingPower() or Unit(unitID):HasDebuffs(A.Flagellation.ID, true) ~= 0) 
-                    and Player:ComboPoints() <= 2 
-                    and (Unit(player):HasBuffs(A.Premeditation.ID) ~= 0 or MultiUnits:GetByRange(10) > 4)
-                    )
-                    then
-                        if Player:Energy() < 60 
-                        and not A.ShadowFocus:IsTalentLearned()
-                            then 
-                                return A.PoolResource:Show(icon)
-                        end
-                        if A.ShurikenTornado:IsReady(unitID)
-                        then
-                            return A.ShurikenTornado:Show(icon)
-                        end
-                end
-                --TODO this was taken from old sub rotation, if there are still errors review here first
-                --cds->add_action( "serrated_bone_spike,cycle_targets=1,if=variable.snd_condition and  not dot.serrated_bone_spike_dot.ticking and target.time_to_die>=21 or fight_remains<=5 and spell_targets.shuriken_storm<3" );
-                if A.SerratedBoneSpike:IsReady(unitID) and inCombat
-                and (UnitThreatSituation("player", unitID) ~= nil or Unit(unitID):IsDummy()) -- player is on the threat table somewhere (in combat with)
-                    then
-                        --Bonepsike target missing buff
-                        if (SNDCondition and Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and  Unit(unitID):TimeToDie() >=21 and not UnitCooldown:IsSpellInFly("player", A.SerratedBoneSpike.ID)) 
-                        or  
-                        (Unit(unitID):TimeToDie() <=5 and MultiUnits:GetByRange(10) <3) 
-                            then
-                                return A.SerratedBoneSpike:Show(icon)
-                            end
-                            --Bone Spike Targeting
-                            if Unit(unitID):HasDeBuffs(A.SerratedBoneSpike.ID, true) ~= 0  -- if target has SBS
-                            and Action.GetToggle(1, "AutoTarget")  --AutoTargetting is Enabled
-                            --and Action.GetToggle(2, "SBSTarget")  --SBS Targeting is enabled not currently implemented in Sub UI, may not implement ever
-                            and ValidKeeptarget(unitID) --Target is something we can swap off
-                            and MultiUnits:GetByRange(15) >= 2 --There are 2 targets in Range
-                            then
-                                for val in pairs(ActiveUnitPlates) do
-                                    if ((SNDCondition and Unit(val):HasDeBuffs(A.SerratedBoneSpike.ID, true) == 0 and  Unit(val):TimeToDie() >=21 and not UnitCooldown:IsSpellInFly("player", A.SerratedBoneSpike.ID)) 
-                                    or  
-                                    (Unit(val):TimeToDie() <=5 and MultiUnits:GetByRange(10) <3))
-                                    and ValidAutotarget(val)
-                                    and
-                                    ((UnitCanAttack("player", val) and Unit(val):GetRange() <=15  and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) --We have threat or it is a dummy        
-                                    then
-                                        return A:Show(icon, ACTION_CONST_AUTOTARGET)
-                                    end
-                                end
-                    end
-                end
-                --cds->add_action( "sepsis,if=variable.snd_condition and combo_points.deficit>=1" );
-                if A.Sepsis:IsReady(unitID) 
-                and
-                (
-                snd_condition and Player:ComboPointsDeficit() >= 1
-                )
-                then
-                    return A.Sepsis:Show(icon)
-                end	 
-                --cds->add_action( this, "Symbols of Death", "if=variable.snd_condition and (talent.enveloping_shadows.enabled or cooldown.shadow_dance.charges>=1) and ( not talent.shuriken_tornado.enabled or talent.shadow_focus.enabled or cooldown.shuriken_tornado.remains>2) and ( not covenant.venthyr or cooldown.flagellation.remains>10 or cooldown.flagellation.up and combo_points>=5)", "Use Symbols on cooldown (after first SnD) unless we are going to pop Tornado and do not have Shadow Focus." );
-                if A.SymbolsOfDeath:IsReady(player)
-                and (Unit(unitID):TimeToDie() > 10 or Unit(unitID):IsBoss())
-                and inMelee
-               and
-               (
-                snd_condition 
-                and (A.EnvelopingShadows:IsTalentLearned() or A.ShadowDance:GetSpellChargesFrac() >=1) 
-                and (not A.ShurikenTornado:IsTalentLearned() or A.ShadowFocus:IsTalentLearned() or A.ShurikenTornado:GetCooldown()>2) 
-                and (Player:GetCovenant() ~= 2 or A.Flagellation:GetCooldown() > 10 or A.Flagellation:IsReady(unitID) and Player:ComboPoints()>=5)
-               )
-                then
-                    return A.SymbolsOfDeath:Show(icon)
-                end
-                --cds->add_talent( this, "Marked for Death", "line_cd=1.5,target_if=min:target.time_to_die,if=raid_event.adds.up and (target.time_to_die<combo_points.deficit or  not stealthed.all and combo_points.deficit>=cp_max_spend)", "If adds are up, snipe the one with lowest TTD. Use when dying faster than CP deficit or not stealthed without any CP." );
-                --cds->add_talent( this, "Marked for Death", "if=raid_event.adds.in>30-raid_event.adds.duration and combo_points.deficit>=cp_max_spend", "If no adds will die within the next 30s, use MfD on boss without any CP." );
-                if MFD()
-                    then return true
-                end
-                --cds->add_action( this, "Shadow Blades", "if=variable.snd_condition and combo_points.deficit>=2 and (cooldown.symbols_of_death.remains<1 or buff.symbols_of_death.up or fight_remains<=20)" );
-                if A.ShadowBlades:IsReady(player)
-                and inMelee
-                and
-                (
-                    snd_condition 
-                    and Player:ComboPointsDeficit() >= 2 
-                    and (A.SymbolsOfDeath:GetCooldown() < 1 or Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 or Unit(unitID):IsBoss() or Unit(unitID):TimeToDie() >= 21)
-                )
-                then
-                    return A.ShadowBlades:Show(icon)
-                end
-                --cds->add_action( "echoing_reprimand,if=variable.snd_condition and combo_points.deficit>=2 and (variable.use_priority_rotation or spell_targets.shuriken_storm<=4 or runeforge.resounding_clarity)" );
-                if A.EchoingReprimand:IsReady(unitID) 
-                and
-                (
-                    snd_condition 
-                    and Player:ComboPointsDeficit() >= 2 
-                    and (use_priority_rotation or MultiUnits:GetByRange(10) <= 4 or A.ResoundingClarity:HasLegendaryCraftingPower())
-                )
-                then
-                    return A.EchoingReprimand:Show(icon)
-                end
-                --cds->add_talent( this, "Shuriken Tornado", "if=talent.shadow_focus.enabled and variable.snd_condition and buff.symbols_of_death.up and combo_points<=2 and ( not buff.premeditation.up or spell_targets.shuriken_storm>4)", "With SF, if not already done, use Tornado with SoD up." );
-                if A.ShurikenTornado:IsReady(unitID)
-                and GetToggle(2, "AoE")
-                and
-                (
-                A.ShadowFocus:IsTalentLearned() 
-                and snd_condition 
-                and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 
-                and Player:ComboPoints() <= 2 
-                and (Unit(player):HasBuffs(A.Premeditation.ID) == 0 or MultiUnits:GetByRange(10) > 4)
-                )
-                then
-                    return A.ShurikenTornado:Show(icon)
-                end
-                --cds->add_action( this, "Shadow Dance", "if= not buff.shadow_dance.up and fight_remains<=8+talent.subterfuge.enabled" );
-                if A.ShadowDance:IsReady(player)
-                and inMelee
-                and (Unit(unitID):TimeToDie() > 8 or Unit(unitID):IsBoss())
-                and
-                (
-                    Unit(player):HasBuffs(A.ShadowDanceBuff.ID) == 0 and Unit(unitID):TimeToDie() <= 8 + boolnumber(A.Subterfuge:IsTalentLearned())
-                )
-                then
-                    return A.ShadowDance:Show(icon)
-                end
-                --I dont support Fleshcraft yet, but if i did, this is where it would go
-                --cds->add_action( "fleshcraft,if=(soulbind.pustule_eruption or soulbind.volatile_solvent) and energy.deficit>=30 and  not stealthed.all and buff.symbols_of_death.down" );
-                --I dont support Potions yet, but if i did, this is where it would go
-                --cds->add_action( potion_action );
-                --cds->add_action( "blood_fury,if=buff.symbols_of_death.up" );
-                if A.BloodFury:IsReady(unitID, true) and inMelee and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 then
-                    return A.BloodFury:Show(icon)
-                end
-                --cds->add_action( "berserking,if=buff.symbols_of_death.up" );
-                if A.Berserking:IsReady(unitID, true) and inMelee and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 then
-                    return A.Berserking:Show(icon)
-                end
-                --cds->add_action( "fireblood,if=buff.symbols_of_death.up" );
-                if A.Fireblood:IsReady(unitID, true) and inMelee and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 then
-                    return A.Fireblood:Show(icon)
-                end
-                --cds->add_action( "ancestral_call,if=buff.symbols_of_death.up" );
-                if A.AncestralCall:IsReady(player) and inMelee and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) ~= 0 then 
-                    return A.AncestralCall:Show(icon)
-                end 
-                --cds->add_action( "use_items,if=buff.symbols_of_death.up or fight_remains<20", "Default fallback for usable items: Use with Symbols of Death." );
-            end
+            
+            --I refuse to make Shadowmeld work for less than $1000USD
+            --stealth_cds->add_action( "pool_resource,for_next=1,extra_amount=40,if=race.night_elf", "Pool for Shadowmeld + Shadowstrike unless we are about to cap on Dance charges. Only when Find Weakness is about to run out." );
+            --stealth_cds->add_action( "shadowmeld,if=energy>=40 and energy.deficit>=10 and  not variable.shd_threshold and combo_points.deficit>1 and debuff.find_weakness.remains<1" );
 
-            local function StealthCooldowns()
-                local shd_combo_points 
-                --stealth_cds->add_action( "variable,name=shd_threshold,value=cooldown.shadow_dance.charges_fractional>=1.75", "Helper Variable" );
-                local shd_threshold = A.ShadowDance:GetSpellChargesFrac() >= 1.75
-
-
-
-
-                
-                --stealth_cds->add_action( this, "Vanish", "if=( not variable.shd_threshold or  not talent.nightstalker.enabled and talent.dark_shadow.enabled) and combo_points.deficit>1 and  not runeforge.mark_of_the_master_assassin", "Vanish if we are capping on Dance charges. Early before first dance if we have no Nightstalker but Dark Shadow in order to get Rupture up (no Master Assassin)." );
-                    if A.Vanish:IsReady(player)
-                    and
-                    (
-                        (not shd_threshold or not A.Nightstalker:IsTalentLearned() and A.DarkShadow:IsTalentLearned()) 
-                        and Player:ComboPointsDeficit() > 1 
-                        and not A.MarkoftheMasterAssassin:HasLegendaryCraftingPower()
-                    )
-                    then
-                        return A.Vanish:Show(icon)
-                    end
-                
-                --I refuse to make Shadowmeld work for less than $1000USD
-                --stealth_cds->add_action( "pool_resource,for_next=1,extra_amount=40,if=race.night_elf", "Pool for Shadowmeld + Shadowstrike unless we are about to cap on Dance charges. Only when Find Weakness is about to run out." );
-                --stealth_cds->add_action( "shadowmeld,if=energy>=40 and energy.deficit>=10 and  not variable.shd_threshold and combo_points.deficit>1 and debuff.find_weakness.remains<1" );
-
-                --stealth_cds->add_action( "variable,name=shd_combo_points,value=combo_points.deficit>=2+buff.shadow_blades.up", "CP thresholds for entering Shadow Dance" );
-                shd_combo_points = Player:ComboPointsDeficit() >= 2 + boolnumber(Unit(player):HasBuffs(A.ShadowBlades.ID) ~= 0)
-                --stealth_cds->add_action( "variable,name=shd_combo_points,value=combo_points.deficit>=3,if=covenant.kyrian" );                
-                if Player:GetCovenant() == 1 then shd_combo_points = Player:ComboPointsDeficit() >= 3 end
-                --stealth_cds->add_action( "variable,name=shd_combo_points,value=combo_points.deficit<=1,if=variable.use_priority_rotation and spell_targets.shuriken_storm>=4" );
-                if use_priority_rotation and MultiUnits:GetByRange(10) >= 4 then shd_combo_points = Player:ComboPointsDeficit() <= 1 end
-                --stealth_cds->add_action( this, "Shadow Dance", "if=variable.shd_combo_points and (variable.shd_threshold or buff.symbols_of_death.remains>=1.2 or spell_targets.shuriken_storm>=4 and cooldown.symbols_of_death.remains>10)", "Dance during Symbols or above threshold." );
-                
-                
-                if A.ShadowDance:IsReady(player)
-                and inMelee
-                and (Unit(unitID):TimeToDie() > 8 or Unit(unitID):IsBoss())
-                and
-                (
-                    shd_combo_points 
-                    and 
-                    (
-                        (shd_threshold and Unit(player):CombatTime() >= .8 ) 
-                    or Unit(player):HasBuffs(A.SymbolsOfDeath.ID) >=1.2 
-                    or MultiUnits:GetByRange(10) >= 4 and A.SymbolsOfDeath:GetCooldown() > 10)
-                )
-                then
-                    return A.ShadowDance:Show(icon)
-                end
-
-
-                --TODO this logic may suck in a m+ since simc APL is assuming raid fights probably need to add isboss checks and TTD checks
-                --stealth_cds->add_action( this, "Shadow Dance", "if=variable.shd_combo_points and fight_remains<cooldown.symbols_of_death.remains", "Burn remaining Dances before the fight ends if SoD won't be ready in time." );
-                if A.ShadowDance:IsReady(player) 
-                and (Unit(unitID):TimeToDie() > 8 or Unit(unitID):IsBoss())
-                and inMelee
-                and
-                (shd_combo_points and Unit(unitID):TimeToDie() < A.SymbolsOfDeath:GetCooldown())
-                then 
-                    return A.ShadowDance:Show(icon)
-                end
-            end
-        
-            local function Opener()
-        local ignoretimers = (BossMods:HasAnyAddon()~=true) or (BossMods:HasAnyAddon()==true and not GetToggle(1, "BossMods")) -- logic for bossmods toggle returns true if no boss mods installed, need extra hasanyaddon check
-        if A.MarkedForDeath:IsReady(unitID) and not Unit(unitID):IsTotem() and Player:ComboPointsDeficit() >=4 + boolnumber(A.DeeperStratagem:IsTalentLearned())
-        and ((ignoretimers and TimeOnTarget() <= 2.5) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 7*GetGCD()))
-        then
-            return A.MarkedForDeath:Show(icon)
-        end
-
-        if A.SliceAndDice:IsReady(unitID, true) and Unit(player):HasBuffs(A.SliceAndDice.ID) <= 9 and Player:ComboPoints() >= 5
-        and ((ignoretimers and TimeOnTarget() <= 2) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 1.1))
-        then
-            return A.SliceAndDice:Show(icon)
-        end
-
-        if A.ShadowBlades:IsReady(unitID) 
-        and inMelee
-        and isBurst 
-        and A.MarkoftheMasterAssassin:HasLegendaryCraftingPower() 
-        and (ignoretimers or inCombat or BossMods:IsEngage())
-        --and GCDPercentage >= 40
-        then
-            return A.ShadowBlades:Show(icon)
-        end
-
-        -- Tricks with boss mods
-        if A.TricksOfTheTrade:IsReady("focus") and (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 2.5) then
-            return A.TricksOfTheTrade:Show(icon)
-        end
-        if A.ShroudOfConcealment:IsReady(player) and IsInRaid() and (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 6) then
-            return A.ShroudOfConcealment:Show(icon)
-        end
-            end
-
-            local function Finishers()
-            --finish->add_action( "variable,name=premed_snd_condition,value=talent.premeditation.enabled and spell_targets.shuriken_storm<(5-covenant.necrolord) and  not covenant.kyrian", "While using Premeditation, avoid casting Slice and Dice when Shadow Dance is soon to be used, except for Kyrian" )
-            local premed_snd_condition = 
-            (
-            A.Premeditation:IsTalentLearned()
-            and MultiUnits:GetByRange(10) < (5-boolnumber(Player:GetCovenant()==4)) 
-            and  Player:GetCovenant() ~= 1
-            )
-            --finish->add_action( this, "Slice and Dice", "if= not variable.premed_snd_condition and spell_targets.shuriken_storm<6 and  not buff.shadow_dance.up and buff.slice_and_dice.remains<fight_remains and refreshable" );
-            if A.SliceAndDice:IsReady(player) 
+            --stealth_cds->add_action( "variable,name=shd_combo_points,value=combo_points.deficit>=2+buff.shadow_blades.up", "CP thresholds for entering Shadow Dance" );
+            shd_combo_points = Player:ComboPointsDeficit() >= 2 + boolnumber(Unit(player):HasBuffs(A.ShadowBlades.ID) ~= 0)
+            --stealth_cds->add_action( "variable,name=shd_combo_points,value=combo_points.deficit>=3,if=covenant.kyrian" );                
+            if Player:GetCovenant() == 1 then shd_combo_points = Player:ComboPointsDeficit() >= 3 end
+            --stealth_cds->add_action( "variable,name=shd_combo_points,value=combo_points.deficit<=1,if=variable.use_priority_rotation and spell_targets.shuriken_storm>=4" );
+            if use_priority_rotation and MultiUnits:GetByRange(10) >= 4 then shd_combo_points = Player:ComboPointsDeficit() <= 1 end
+            --stealth_cds->add_action( this, "Shadow Dance", "if=variable.shd_combo_points and (variable.shd_threshold or buff.symbols_of_death.remains>=1.2 or spell_targets.shuriken_storm>=4 and cooldown.symbols_of_death.remains>10)", "Dance during Symbols or above threshold." );
+            
+            
+            if A.ShadowDance:IsReady(player)
             and inMelee
+            and (Unit(unitID):TimeToDie() > 8 or Unit(unitID):IsBoss())
             and
             (
-            not premed_snd_condition 
-            and MultiUnits:GetByRange(10) < 6 
-            and Unit(player):HasBuffs(A.ShadowDance.ID) == 0
-            and Unit(player):HasBuffs(A.SliceAndDice.ID) < Unit(unitID):TimeToDie() 
-            and Unit(player):PT(A.SliceAndDice.ID)
-            ) then
-                return A.SliceAndDice:Show(icon)
-            end
-            --finish->add_action( this, "Slice and Dice", "if=variable.premed_snd_condition and cooldown.shadow_dance.charges_fractional<1.75 and buff.slice_and_dice.remains<cooldown.symbols_of_death.remains and (cooldown.shadow_dance.ready and buff.symbols_of_death.remains-buff.shadow_dance.remains<1.2)" );
-            if A.SliceAndDice:IsReady(player) 
-            and inMelee
-            and
-            (
-            premed_snd_condition 
-            and A.ShadowDance:GetSpellChargesFrac() < 1.75 
-            and Unit(player):HasBuffs(A.SliceAndDice.ID) < A.SymbolsOfDeath:GetCooldown() 
-            and (A.ShadowDance:IsReady(player)
-            and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) - Unit(player):HasBuffs(A.ShadowDance.ID) < 1.2)
-            ) then
-                return A.SliceAndDice:Show(icon)
-            end
-            --finish->add_action( "variable,name=skip_rupture,value=master_assassin_remains>0 or  not talent.nightstalker.enabled and talent.dark_shadow.enabled and buff.shadow_dance.up or spell_targets.shuriken_storm>=(5-runeforge.finality)", "Helper Variable for Rupture. Skip during Master Assassin or during Dance with Dark and no Nightstalker." );
-            local skip_rupture = 
-            (Unit(player):HasBuffs(A.MasterAssassinsMark.ID) ~= 0 
-            or  not A.Nightstalker:IsTalentLearned() 
-            and A.DarkShadow:IsTalentLearned()
-            and Unit(player):HasBuffs(A.ShadowDance.ID) ~= 0 
-            or MultiUnits:GetByRange(10) >= (5-boolnumber(A.Finality:HasLegendaryCraftingPower())))
-
-            --finish->add_action( this, "Rupture", "if=( not variable.skip_rupture or variable.use_priority_rotation) and target.time_to_die-remains>6 and refreshable", "Keep up Rupture if it is about to run out." );
-            if A.Rupture:IsReady(unitID) and
-            (
-            (not skip_rupture or use_priority_rotation) 
-            and Unit(unitID):TimeToDie() - Unit(unitID):HasDeBuffs(A.Rupture.ID, true) > 6 
-            and Unit(unitID):PT(A.Rupture.ID, true)
-            ) then
-                return A.Rupture:Show(icon)
-            end
-            --finish->add_talent( this, "Secret Technique" );
-            if A.SecretTechnique:IsReady(unitID) then
-                return A.SecretTechnique:Show(icon)
-            end
-
-            --TODO if there are problems this is old code review first for bugs
-            if A.Rupture:IsReady(unitID) 
-            and not skip_rupture
-            and Unit(unitID):PT(A.Rupture.ID, true) -- current unit is not in Pandemic window
-            and Action.GetToggle(1, "AutoTarget") 
-            and Unit(player):CombatTime() > .8 
-            and GetCurrentGCD() ~= 0 --prevent rotation from getting completlely stuck
-            and ValidKeeptarget(unitID) --Target is something we swap off of
-			then
-				for val in pairs(ActiveUnitPlates) do
-					if 	Unit(val):PT(A.Rupture.ID, true) --Checks Pandemic Threshold based on DOT duration
-                        and Unit(val):TimeToDie() > (5+(2*Player:ComboPoints())) -- nameplate will live long enough
-                        and A.Kick:IsInRange(val) -- in range
-                        and ValidAutotarget(val) --Valid for auto targeting
-						and	(( UnitCanAttack("player", val) and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) --in combat with nameplate or comabt dummy 
-                        then
-							return A:Show(icon, ACTION_CONST_AUTOTARGET)
-					end
-				end
-			end
-            --finish->add_action( this, "Rupture", "if= not variable.skip_rupture and remains<cooldown.symbols_of_death.remains+10 and cooldown.symbols_of_death.remains<=5 and target.time_to_die-remains>cooldown.symbols_of_death.remains+5", "Refresh Rupture early if it will expire during Symbols. Do that refresh if SoD gets ready in the next 5s." );
-            if A.Rupture:IsReady(unitID) and
-            (
-            not skip_rupture 
-            and Unit(unitID):HasDeBuffs(A.Rupture.ID, true) < A.SymbolsOfDeath:GetCooldown() +10 
-            and A.SymbolsOfDeath:GetCooldown() <= 5 
-            and Unit(unitID):TimeToDie() - Unit(unitID):HasDeBuffs(A.Rupture.ID, true) > A.SymbolsOfDeath:GetCooldown() + 5
-            ) then
-                return A.Rupture:Show(icon)
-            end
-            --finish->add_action( this, "Black Powder", "if= not variable.use_priority_rotation and spell_targets>=3" );
-            if A.BlackPowder:IsReady(unitID) 
-            and GetToggle(2, "AoE")
-            and
-                (
-                not use_priority_rotation 
-                and MultiUnits:GetByRange(10) >= 3
-                ) then
-                    return A.BlackPowder:Show(icon)
-                end
-            --finish->add_action( this, "Eviscerate" );
-            if A.Eviscerate:IsReady(unitID)
-                then return A.Eviscerate:Show(icon)
-            end
-            end
-
-            local function StealthedRotation()
-                --stealthed->add_action( this, "Shadowstrike", "if=(buff.stealth.up or buff.vanish.up) and master_assassin_remains=0", "If Stealth/vanish are up, use Shadowstrike to benefit from the passive bonus and Find Weakness, even if we are at max CP (unless using Master Assassin)" );
-                if A.Shadowstrike:IsReady(unitID)
-                and ((GetToggle(2, "ShadowstrikeRange") <= 6 and inMelee) or (GetToggle(2, "ShadowstrikeRange") >= 6))
-                and
-                ((Unit(player):HasBuffs(A.Stealth.ID) ~= 0 or Unit(player):HasBuffs(A.VanishStealth.ID) ~= 0) and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) ==0) 
-                then
-                    return A.Shadowstrike:Show(icon)
-                end
-                --stealthed->add_action( "call_action_list,name=finish,if=effective_combo_points>=cp_max_spend" );
-                if (effective_combo_points>=Player:ComboPointsMax()) and Finishers()
-                then
-                    return true
-                end
-                --stealthed->add_action( "call_action_list,name=finish,if=buff.shuriken_tornado.up and combo_points.deficit<=2", "Finish at 3+ CP without DS / 4+ with DS with Shuriken Tornado buff up to avoid some CP waste situations." );
-                if (Unit(player):HasBuffs(A.ShurikenTornado.ID) ~= 0 and Player:ComboPointsDeficit() <=2) and Finishers() then
-                  return true  
-                end
-                --stealthed->add_action( "call_action_list,name=finish,if=spell_targets.shuriken_storm>=4 and effective_combo_points>=4", "Also safe to finish at 4+ CP with exactly 4 targets. (Same as outside stealth.)" );
-                if  (MultiUnits:GetByRange(10) >= 4 and effective_combo_points >=4) and Finishers() 
-                then
-                   return true 
-                end
-                --stealthed->add_action( "call_action_list,name=finish,if=combo_points.deficit<=1-(talent.deeper_stratagem.enabled and buff.vanish.up)", "Finish at 4+ CP without DS, 5+ with DS, and 6 with DS after Vanish" );;
-                if (Player:ComboPointsDeficit() <= 1-(boolnumber(A.DeeperStratagem:IsTalentLearned() and Unit(player):HasBuffs(A.VanishStealth.ID) ~= 0))) and Finishers()
-                then
-                    return true
-                end
-                --stealthed->add_action( this, "Shadowstrike", "if=stealthed.sepsis and spell_targets.shuriken_storm<4" );
-                if A.Shadowstrike:IsReady(unitID)
-                and ((GetToggle(2, "ShadowstrikeRange") <= 6 and inMelee) or (GetToggle(2, "ShadowstrikeRange") >= 6))
-                and
-
-                (
-                    Unit(player):HasBuffs(A.SepsisStealth.ID, _, true) ~= 0 and MultiUnits:GetByRange(10) < 4
-                ) then
-                    return A.Shadowstrike:Show(icon)
-                end
-                --stealthed->add_action( this, "Shiv", "if=talent.nightstalker.enabled and runeforge.tiny_toxic_blade and spell_targets.shuriken_storm<5" );
-                if A.Shiv:IsReady(unitID)
-                and
-                (
-                    A.Nightstalker:IsTalentLearned() and A.TinyToxicBlade:HasLegendaryCraftingPower() and MultiUnits:GetByRange(10) < 5
-                ) then
-                    return A.Shiv:Show(icon)
-                end
-                --stealthed->add_action( this, "Shadowstrike", "cycle_targets=1,if= not variable.use_priority_rotation and debuff.find_weakness.remains<1 and spell_targets.shuriken_storm<=3 and target.time_to_die-remains>6", "Up to 3 targets (no prio) keep up Find Weakness by cycling Shadowstrike." );
-                if A.Shadowstrike:IsReady(unitID)
-                and inCombat
-                and not use_priority_rotation 
-                and Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true) < 1 
-                and MultiUnits:GetByRange(10) <=3 
-                and (Unit(unitID):TimeToDie() - Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true)) > 6
-                and ((GetToggle(2, "ShadowstrikeRange") <= 6 and inMelee) or (GetToggle(2, "ShadowstrikeRange") >= 6))
-                then
-                    return A.Shadowstrike:Show(icon)
-                end
-                if A.Shadowstrike:IsReady(unitID)
-                and inCombat
-                and not use_priority_rotation 
-                and Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true) >= 1 
-                and MultiUnits:GetByRange(10) <=3 
-                and Action.GetToggle(1, "AutoTarget")  
-                and GetCurrentGCD() ~= 0 --prevent rotation from getting stuck
-                and ValidKeeptarget(unitID) --Target is something we swap off of
-                then
-                    for val in pairs(ActiveUnitPlates) do
-                        if 	(Unit(val):HasDeBuffs(A.FindWeakness.ID, true) <= 1 --Checck FindWeakenss
-                            and Unit(val):TimeToDie() - Unit(val):HasDeBuffs(A.FindWeakness.ID, true) > 6-- nameplate will live long enough
-                            and A.Kick:IsInRange(val)) -- in range
-                            and ValidAutotarget(val) --Valid for auto targeting
-                            and	(( UnitCanAttack("player", val) and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) --in combat with nameplate or comabt dummy 
-                            then
-                                return A:Show(icon, ACTION_CONST_AUTOTARGET)
-                        end
-                    end
-                end 
-                --stealthed->add_action( this, "Shadowstrike", "if=variable.use_priority_rotation and (debuff.find_weakness.remains<1 or talent.weaponmaster.enabled and spell_targets.shuriken_storm<=4)", "For priority rotation, use Shadowstrike over Storm with WM against up to 4 targets or if FW is running off (on any amount of targets)" );
-                if A.Shadowstrike:IsReady(unitID)
-                and ((GetToggle(2, "ShadowstrikeRange") <= 6 and inMelee) or (GetToggle(2, "ShadowstrikeRange") >= 6))
-                and
-                (
-                use_priority_rotation 
-                and (Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true) < 1 or A.Weaponmaster:IsTalentLearned() and MultiUnits:GetByRange(10) <= 4)
-                ) then
-                    return A.Shadowstrike:Show(icon)
-                end
-                --stealthed->add_action( this, "Shuriken Storm", "if=spell_targets>=3+(buff.the_rotten.up or runeforge.akaaris_soul_fragment) and (buff.symbols_of_death_autocrit.up or  not buff.premeditation.up or spell_targets>=5)" );
-                if A.ShurikenStorm:IsReady(unitID)
-                and GetToggle(2, "AoE")
-                and Unit(player):CombatTime() >0
-                and
-                (
-                    MultiUnits:GetByRange(10) >= 3 + (
-                        boolnumber(Unit(player):HasBuffs(A.TheRotten.ID) ~= 0) 
-                     or boolnumber(A.AkaarisSoulFragment:HasLegendaryCraftingPower())
-                     )  
-                    and (Unit(player):HasBuffs(A.SymbolsOfDeathCrit.ID, _, true) ~= 0 or  Unit(player):HasBuffs(A.Premeditation.ID) == 0 or MultiUnits:GetByRange(10) >= 5)
-                ) 
-                then
-                    return A.ShurikenStorm:Show(icon)
-                end
-                --stealthed->add_action( this, "Shadowstrike", "if=debuff.find_weakness.remains<=1 or cooldown.symbols_of_death.remains<18 and debuff.find_weakness.remains<cooldown.symbols_of_death.remains", "Shadowstrike to refresh Find Weakness and to ensure we can carry over a full FW into the next SoD if possible." );
-                if A.Shadowstrike:IsReady(unitID) 
-                and ((GetToggle(2, "ShadowstrikeRange") <= 6 and inMelee) or (GetToggle(2, "ShadowstrikeRange") >= 6))
-                and
-                (
-                Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true) <=1 
-                or A.SymbolsOfDeath:GetCooldown() < 18 
-                and Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true) < A.SymbolsOfDeath:GetCooldown()
-                ) then
-                    return A.Shadowstrike:Show(icon)
-                end
-                --stealthed->add_talent( this, "Gloomblade", "if=buff.perforated_veins.stack>=5 and conduit.perforated_veins.rank>=13" );
-                if A.Gloomblade:IsReady(unitID) 
-                and inMelee
-                and
-                (
-                    Unit(player):HasBuffsStacks(A.PerforatedVeins.ID) >= 5 
-                    -- TODO and conduit.perforated_veins.rank>=13
-                ) then
-                    return A.Gloomblade:Show(icon)
-                end
-                --stealthed->add_action( this, "Shadowstrike" );
-                if A.Shadowstrike:IsReady(unitID) 
-                and ((GetToggle(2, "ShadowstrikeRange") <= 6 and inMelee) or (GetToggle(2, "ShadowstrikeRange") >= 6))
-                then
-                    return A.Shadowstrike:Show(icon)
-                end
-
-                --stealthed->add_action( this, "Cheap Shot", "if= not target.is_boss and combo_points.deficit>=1 and buff.shot_in_the_dark.up and energy.time_to_40>gcd.max" );
-                if A.CheapShot:IsReady(unitID) and
-                (
-                    -- TODO not target.is_boss and 
-                    Player:ComboPointsDeficit() >= 1 
-                    and Unit(player):HasBuffs(A.ShotInTheDark.ID) ~= 0 
-                    and Player:EnergyTimeToX(40) > GetGCD()
-                ) then
-                    return A.CheapShot:Show(icon)
-                end
-                --this forces rotation to pool energy while stealth buff is up and nothing else avaliable
-                if true then return A.PoolResource:Show(icon) end
-
-            end
-
-            local function Builders()
-                --build->add_action( this, "Shiv", "if= not talent.nightstalker.enabled and runeforge.tiny_toxic_blade and spell_targets.shuriken_storm<5" );
-                if A.Shiv:IsReady(unitID) 
-                and
-                (
-                not A.Nightstalker:IsTalentLearned() 
-                and A.TinyToxicBlade:HasLegendaryCraftingPower()
-                and MultiUnits:GetByRange(10) < 5
-                ) then
-                    return A.Shiv:Show(icon)
-                end
-                --build->add_action( this, "Shuriken Storm", "if=spell_targets>=2 and ( not covenant.necrolord or cooldown.serrated_bone_spike.max_charges-charges_fractional>=0.25 or spell_targets.shuriken_storm>4)" );
-                if A.ShurikenStorm:IsReady(unitID) 
-                and MultiUnits:GetByRange(10) >= 2 
-                and GetToggle(2, "AoE")
+                shd_combo_points 
                 and 
                 (
-                    Player:GetCovenant() ~= 4
-                    or A.SerratedBoneSpike:GetSpellChargesMax()-A.SerratedBoneSpike:GetSpellChargesFrac() >= 0.25 
-                    or MultiUnits:GetByRange(10) > 4
-                ) then
-                    return A.ShurikenStorm:Show(icon)
-                end
-                --build->add_action( "serrated_bone_spike,if=cooldown.serrated_bone_spike.max_charges-charges_fractional<=0.25 or soulbind.lead_by_example.enabled and  not buff.lead_by_example.up or soulbind.kevins_oozeling.enabled and  not debuff.kevins_wrath.up" );
-                if A.SerratedBoneSpike:IsReady(unitID) and 
-                (
-                    A.SerratedBoneSpike:GetSpellChargesMax()-A.SerratedBoneSpike:GetSpellChargesFrac() <= 0.25 
-                --TODO: or soulbind.lead_by_example.enabled and not buff.lead_by_example.up 
-                --TODO: or soulbind.kevins_oozeling.enabled and not debuff.kevins_wrath.up
-                ) then
-                    return A.SerratedBoneSpike:Show(icon) 
-                end
-
-                --build->add_talent( this, "Gloomblade" );
-                if A.Gloomblade:IsReady(unitID)
-                and inMelee
-                then
-                    return A.Gloomblade:Show(icon)
-                end
-                --build->add_action( this, "Backstab" );
-                if A.Backstab:IsReady(unitID)
-                and inMelee
-                then
-                    return A.Backstab:Show(icon)
-                end
-                --TODO check this first if there are bugs
-                --In combat ranged GCD filler
-                if A.ShurikenToss:IsReady(unitID) and Player:Energy() >=90 and Unit(unitID):HealthPercent() < 100 and not inMelee then
-                    return A.ShurikenToss:Show(icon)
-                end
-
+                    (shd_threshold and Unit(player):CombatTime() >= .8 ) 
+                or Unit(player):HasBuffs(A.SymbolsOfDeath.ID) >=1.2 
+                or MultiUnits:GetByRange(10) >= 4 and A.SymbolsOfDeath:GetCooldown() > 10)
+            )
+            then
+                return A.ShadowDance:Show(icon)
             end
+
+
+            --TODO this logic may suck in a m+ since simc APL is assuming raid fights probably need to add isboss checks and TTD checks
+            --stealth_cds->add_action( this, "Shadow Dance", "if=variable.shd_combo_points and fight_remains<cooldown.symbols_of_death.remains", "Burn remaining Dances before the fight ends if SoD won't be ready in time." );
+            if A.ShadowDance:IsReady(player) 
+            and (Unit(unitID):TimeToDie() > 8 or Unit(unitID):IsBoss())
+            and inMelee
+            and
+            (shd_combo_points and Unit(unitID):TimeToDie() < A.SymbolsOfDeath:GetCooldown())
+            then 
+                return A.ShadowDance:Show(icon)
+            end
+        end
+        local function Opener()
+    local ignoretimers = (BossMods:HasAnyAddon()~=true) or (BossMods:HasAnyAddon()==true and not GetToggle(1, "BossMods")) -- logic for bossmods toggle returns true if no boss mods installed, need extra hasanyaddon check
+    if A.MarkedForDeath:IsReady(unitID) and not Unit(unitID):IsTotem() and Player:ComboPointsDeficit() >=4 + boolnumber(A.DeeperStratagem:IsTalentLearned())
+    and ((ignoretimers and TimeOnTarget() <= 2.5) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 7*GetGCD()))
+    then
+        return A.MarkedForDeath:Show(icon)
+    end
+
+    if A.SliceAndDice:IsReady(unitID, true) and Unit(player):HasBuffs(A.SliceAndDice.ID) <= 9 and Player:ComboPoints() >= 5
+    and ((ignoretimers and TimeOnTarget() <= 2) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 1.1))
+    then
+        return A.SliceAndDice:Show(icon)
+    end
+
+    if A.ShadowBlades:IsReady(unitID) 
+    and inMelee
+    and isBurst 
+    and A.MarkoftheMasterAssassin:HasLegendaryCraftingPower() 
+    and (ignoretimers or inCombat or BossMods:IsEngage())
+    --and GCDPercentage >= 40
+    then
+        return A.ShadowBlades:Show(icon)
+    end
+
+    -- Tricks with boss mods
+    if A.TricksOfTheTrade:IsReady("focus") and (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 2.5) then
+        return A.TricksOfTheTrade:Show(icon)
+    end
+    if A.ShroudOfConcealment:IsReady(player) and IsInRaid() and (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 6) then
+        return A.ShroudOfConcealment:Show(icon)
+    end
+        end
+        local function Finishers()
+        --finish->add_action( "variable,name=premed_snd_condition,value=talent.premeditation.enabled and spell_targets.shuriken_storm<(5-covenant.necrolord) and  not covenant.kyrian", "While using Premeditation, avoid casting Slice and Dice when Shadow Dance is soon to be used, except for Kyrian" )
+        local premed_snd_condition = 
+        (
+        A.Premeditation:IsTalentLearned()
+        and MultiUnits:GetByRange(10) < (5-boolnumber(Player:GetCovenant()==4)) 
+        and  Player:GetCovenant() ~= 1
+        )
+        --finish->add_action( this, "Slice and Dice", "if= not variable.premed_snd_condition and spell_targets.shuriken_storm<6 and  not buff.shadow_dance.up and buff.slice_and_dice.remains<fight_remains and refreshable" );
+        if A.SliceAndDice:IsReady(player) 
+        and inMelee
+        and
+        (
+        not premed_snd_condition 
+        and MultiUnits:GetByRange(10) < 6 
+        and Unit(player):HasBuffs(A.ShadowDance.ID) == 0
+        and Unit(player):HasBuffs(A.SliceAndDice.ID) < Unit(unitID):TimeToDie() 
+        and Unit(player):PT(A.SliceAndDice.ID)
+        ) then
+            return A.SliceAndDice:Show(icon)
+        end
+        --finish->add_action( this, "Slice and Dice", "if=variable.premed_snd_condition and cooldown.shadow_dance.charges_fractional<1.75 and buff.slice_and_dice.remains<cooldown.symbols_of_death.remains and (cooldown.shadow_dance.ready and buff.symbols_of_death.remains-buff.shadow_dance.remains<1.2)" );
+        if A.SliceAndDice:IsReady(player) 
+        and inMelee
+        and
+        (
+        premed_snd_condition 
+        and A.ShadowDance:GetSpellChargesFrac() < 1.75 
+        and Unit(player):HasBuffs(A.SliceAndDice.ID) < A.SymbolsOfDeath:GetCooldown() 
+        and (A.ShadowDance:IsReady(player)
+        and Unit(player):HasBuffs(A.SymbolsOfDeath.ID) - Unit(player):HasBuffs(A.ShadowDance.ID) < 1.2)
+        ) then
+            return A.SliceAndDice:Show(icon)
+        end
+        --finish->add_action( "variable,name=skip_rupture,value=master_assassin_remains>0 or  not talent.nightstalker.enabled and talent.dark_shadow.enabled and buff.shadow_dance.up or spell_targets.shuriken_storm>=(5-runeforge.finality)", "Helper Variable for Rupture. Skip during Master Assassin or during Dance with Dark and no Nightstalker." );
+        local skip_rupture = 
+        (Unit(player):HasBuffs(A.MasterAssassinsMark.ID) ~= 0 
+        or  not A.Nightstalker:IsTalentLearned() 
+        and A.DarkShadow:IsTalentLearned()
+        and Unit(player):HasBuffs(A.ShadowDance.ID) ~= 0 
+        or MultiUnits:GetByRange(10) >= (5-boolnumber(A.Finality:HasLegendaryCraftingPower())))
+
+        --finish->add_action( this, "Rupture", "if=( not variable.skip_rupture or variable.use_priority_rotation) and target.time_to_die-remains>6 and refreshable", "Keep up Rupture if it is about to run out." );
+        if A.Rupture:IsReady(unitID) and
+        (
+        (not skip_rupture or use_priority_rotation) 
+        and Unit(unitID):TimeToDie() - Unit(unitID):HasDeBuffs(A.Rupture.ID, true) > 6 
+        and Unit(unitID):PT(A.Rupture.ID, true)
+        ) then
+            return A.Rupture:Show(icon)
+        end
+        --finish->add_talent( this, "Secret Technique" );
+        if A.SecretTechnique:IsReady(unitID) then
+            return A.SecretTechnique:Show(icon)
+        end
+
+        --TODO if there are problems this is old code review first for bugs
+        if A.Rupture:IsReady(unitID) 
+        and not skip_rupture
+        and Unit(unitID):PT(A.Rupture.ID, true) -- current unit is not in Pandemic window
+        and Action.GetToggle(1, "AutoTarget") 
+        and Unit(player):CombatTime() > .8 
+        and GetCurrentGCD() ~= 0 --prevent rotation from getting completlely stuck
+        and not IgnoreNameplates[npc_id] --Target is something we swap off of
+        then
+            for val in pairs(ActiveUnitPlates) do
+                if 	Unit(val):PT(A.Rupture.ID, true) --Checks Pandemic Threshold based on DOT duration
+                    and Unit(val):TimeToDie() > (5+(2*Player:ComboPoints())) -- nameplate will live long enough
+                    and A.Kick:IsInRange(val) -- in range
+                    and ValidAutotarget(val) --Valid for auto targeting
+                    and	(( UnitCanAttack("player", val) and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) --in combat with nameplate or comabt dummy 
+                    then
+                        return A:Show(icon, ACTION_CONST_AUTOTARGET)
+                end
+            end
+        end
+        --finish->add_action( this, "Rupture", "if= not variable.skip_rupture and remains<cooldown.symbols_of_death.remains+10 and cooldown.symbols_of_death.remains<=5 and target.time_to_die-remains>cooldown.symbols_of_death.remains+5", "Refresh Rupture early if it will expire during Symbols. Do that refresh if SoD gets ready in the next 5s." );
+        if A.Rupture:IsReady(unitID) and
+        (
+        not skip_rupture 
+        and Unit(unitID):HasDeBuffs(A.Rupture.ID, true) < A.SymbolsOfDeath:GetCooldown() +10 
+        and A.SymbolsOfDeath:GetCooldown() <= 5 
+        and Unit(unitID):TimeToDie() - Unit(unitID):HasDeBuffs(A.Rupture.ID, true) > A.SymbolsOfDeath:GetCooldown() + 5
+        ) then
+            return A.Rupture:Show(icon)
+        end
+        --finish->add_action( this, "Black Powder", "if= not variable.use_priority_rotation and spell_targets>=3" );
+        if A.BlackPowder:IsReady(unitID) 
+        and GetToggle(2, "AoE")
+        and
+            (
+            not use_priority_rotation 
+            and MultiUnits:GetByRange(10) >= 3
+            ) then
+                return A.BlackPowder:Show(icon)
+            end
+        --finish->add_action( this, "Eviscerate" );
+        if A.Eviscerate:IsReady(unitID)
+            then return A.Eviscerate:Show(icon)
+        end
+        end
+        local function StealthedRotation()
+            --stealthed->add_action( this, "Shadowstrike", "if=(buff.stealth.up or buff.vanish.up) and master_assassin_remains=0", "If Stealth/vanish are up, use Shadowstrike to benefit from the passive bonus and Find Weakness, even if we are at max CP (unless using Master Assassin)" );
+            if A.Shadowstrike:IsReady(unitID)
+            and ((GetToggle(2, "ShadowstrikeRange") and inMelee) or (not GetToggle(2, "ShadowstrikeRange")))
+            and
+            ((Unit(player):HasBuffs(A.Stealth.ID) ~= 0 or Unit(player):HasBuffs(A.VanishStealth.ID) ~= 0) and Unit(player):HasBuffs(A.MasterAssassinsMark.ID) ==0) 
+            then
+                return A.Shadowstrike:Show(icon)
+            end
+            --stealthed->add_action( "call_action_list,name=finish,if=effective_combo_points>=cp_max_spend" );
+            if (effective_combo_points>=Player:ComboPointsMax()) and Finishers()
+            then
+                return true
+            end
+            --stealthed->add_action( "call_action_list,name=finish,if=buff.shuriken_tornado.up and combo_points.deficit<=2", "Finish at 3+ CP without DS / 4+ with DS with Shuriken Tornado buff up to avoid some CP waste situations." );
+            if (Unit(player):HasBuffs(A.ShurikenTornado.ID) ~= 0 and Player:ComboPointsDeficit() <=2) and Finishers() then
+                return true  
+            end
+            --stealthed->add_action( "call_action_list,name=finish,if=spell_targets.shuriken_storm>=4 and effective_combo_points>=4", "Also safe to finish at 4+ CP with exactly 4 targets. (Same as outside stealth.)" );
+            if  (MultiUnits:GetByRange(10) >= 4 and effective_combo_points >=4) and Finishers() 
+            then
+                return true 
+            end
+            --stealthed->add_action( "call_action_list,name=finish,if=combo_points.deficit<=1-(talent.deeper_stratagem.enabled and buff.vanish.up)", "Finish at 4+ CP without DS, 5+ with DS, and 6 with DS after Vanish" );;
+            if (Player:ComboPointsDeficit() <= 1-(boolnumber(A.DeeperStratagem:IsTalentLearned() and Unit(player):HasBuffs(A.VanishStealth.ID) ~= 0))) and Finishers()
+            then
+                return true
+            end
+            --stealthed->add_action( this, "Shadowstrike", "if=stealthed.sepsis and spell_targets.shuriken_storm<4" );
+            if A.Shadowstrike:IsReady(unitID)
+            and ((GetToggle(2, "ShadowstrikeRange") and inMelee) or (not GetToggle(2, "ShadowstrikeRange")))
+            and
+
+            (
+                Unit(player):HasBuffs(A.SepsisStealth.ID, _, true) ~= 0 and MultiUnits:GetByRange(10) < 4
+            ) then
+                return A.Shadowstrike:Show(icon)
+            end
+            --stealthed->add_action( this, "Shiv", "if=talent.nightstalker.enabled and runeforge.tiny_toxic_blade and spell_targets.shuriken_storm<5" );
+            if A.Shiv:IsReady(unitID)
+            and
+            (
+                A.Nightstalker:IsTalentLearned() and A.TinyToxicBlade:HasLegendaryCraftingPower() and MultiUnits:GetByRange(10) < 5
+            ) then
+                return A.Shiv:Show(icon)
+            end
+            --stealthed->add_action( this, "Shadowstrike", "cycle_targets=1,if= not variable.use_priority_rotation and debuff.find_weakness.remains<1 and spell_targets.shuriken_storm<=3 and target.time_to_die-remains>6", "Up to 3 targets (no prio) keep up Find Weakness by cycling Shadowstrike." );
+            if A.Shadowstrike:IsReady(unitID)
+            and inCombat
+            and not use_priority_rotation 
+            and Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true) < 1 
+            and MultiUnits:GetByRange(10) <=3 
+            and (Unit(unitID):TimeToDie() - Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true)) > 6
+            and ((GetToggle(2, "ShadowstrikeRange") and inMelee) or (not GetToggle(2, "ShadowstrikeRange")))
+            then
+                return A.Shadowstrike:Show(icon)
+            end
+            if A.Shadowstrike:IsReady(unitID)
+            and inCombat
+            and not use_priority_rotation 
+            and Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true) >= 1 
+            and MultiUnits:GetByRange(10) <=3 
+            and Action.GetToggle(1, "AutoTarget")  
+            and GetCurrentGCD() ~= 0 --prevent rotation from getting stuck
+            and not IgnoreNameplates[npc_id] --Target is something we swap off of
+            then
+                for val in pairs(ActiveUnitPlates) do
+                    if 	(Unit(val):HasDeBuffs(A.FindWeakness.ID, true) <= 1 --Checck FindWeakenss
+                        and Unit(val):TimeToDie() - Unit(val):HasDeBuffs(A.FindWeakness.ID, true) > 6-- nameplate will live long enough
+                        and A.Kick:IsInRange(val)) -- in range
+                        and ValidAutotarget(val) --Valid for auto targeting
+                        and	(( UnitCanAttack("player", val) and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) --in combat with nameplate or comabt dummy 
+                        then
+                            return A:Show(icon, ACTION_CONST_AUTOTARGET)
+                    end
+                end
+            end 
+            --stealthed->add_action( this, "Shadowstrike", "if=variable.use_priority_rotation and (debuff.find_weakness.remains<1 or talent.weaponmaster.enabled and spell_targets.shuriken_storm<=4)", "For priority rotation, use Shadowstrike over Storm with WM against up to 4 targets or if FW is running off (on any amount of targets)" );
+            if A.Shadowstrike:IsReady(unitID)
+            and ((GetToggle(2, "ShadowstrikeRange") and inMelee) or (not GetToggle(2, "ShadowstrikeRange") ))
+            and
+            (
+            use_priority_rotation 
+            and (Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true) < 1 or A.Weaponmaster:IsTalentLearned() and MultiUnits:GetByRange(10) <= 4)
+            ) then
+                return A.Shadowstrike:Show(icon)
+            end
+            --stealthed->add_action( this, "Shuriken Storm", "if=spell_targets>=3+(buff.the_rotten.up or runeforge.akaaris_soul_fragment) and (buff.symbols_of_death_autocrit.up or  not buff.premeditation.up or spell_targets>=5)" );
+            if A.ShurikenStorm:IsReady(unitID)
+            and GetToggle(2, "AoE")
+            and Unit(player):CombatTime() >0
+            and
+            (
+                MultiUnits:GetByRange(10) >= 3 + (
+                    boolnumber(Unit(player):HasBuffs(A.TheRotten.ID) ~= 0) 
+                    or boolnumber(A.AkaarisSoulFragment:HasLegendaryCraftingPower())
+                    )  
+                and (Unit(player):HasBuffs(A.SymbolsOfDeathCrit.ID, _, true) ~= 0 or  Unit(player):HasBuffs(A.Premeditation.ID) == 0 or MultiUnits:GetByRange(10) >= 5)
+            ) 
+            then
+                return A.ShurikenStorm:Show(icon)
+            end
+            --stealthed->add_action( this, "Shadowstrike", "if=debuff.find_weakness.remains<=1 or cooldown.symbols_of_death.remains<18 and debuff.find_weakness.remains<cooldown.symbols_of_death.remains", "Shadowstrike to refresh Find Weakness and to ensure we can carry over a full FW into the next SoD if possible." );
+            if A.Shadowstrike:IsReady(unitID) 
+            and ((GetToggle(2, "ShadowstrikeRange") and inMelee) or (not GetToggle(2, "ShadowstrikeRange")))
+            and
+            (
+            Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true) <=1 
+            or A.SymbolsOfDeath:GetCooldown() < 18 
+            and Unit(unitID):HasDeBuffs(A.FindWeakness.ID, true) < A.SymbolsOfDeath:GetCooldown()
+            ) then
+                return A.Shadowstrike:Show(icon)
+            end
+            --stealthed->add_talent( this, "Gloomblade", "if=buff.perforated_veins.stack>=5 and conduit.perforated_veins.rank>=13" );
+            if A.Gloomblade:IsReady(unitID) 
+            and inMelee
+            and
+            (
+                Unit(player):HasBuffsStacks(A.PerforatedVeins.ID) >= 5 
+                -- TODO and conduit.perforated_veins.rank>=13
+            ) then
+                return A.Gloomblade:Show(icon)
+            end
+            --stealthed->add_action( this, "Shadowstrike" );
+            if A.Shadowstrike:IsReady(unitID) 
+            and ((GetToggle(2, "ShadowstrikeRange") and inMelee) or (not GetToggle(2, "ShadowstrikeRange")))
+            then
+                return A.Shadowstrike:Show(icon)
+            end
+
+            --stealthed->add_action( this, "Cheap Shot", "if= not target.is_boss and combo_points.deficit>=1 and buff.shot_in_the_dark.up and energy.time_to_40>gcd.max" );
+            if A.CheapShot:IsReady(unitID) and
+            (
+                -- TODO not target.is_boss and 
+                Player:ComboPointsDeficit() >= 1 
+                and Unit(player):HasBuffs(A.ShotInTheDark.ID) ~= 0 
+                and Player:EnergyTimeToX(40) > GetGCD()
+            ) then
+                return A.CheapShot:Show(icon)
+            end
+            --this forces rotation to pool energy while stealth buff is up and nothing else avaliable
+            if true then return A.PoolResource:Show(icon) end
+
+        end
+        local function Builders()
+            --build->add_action( this, "Shiv", "if= not talent.nightstalker.enabled and runeforge.tiny_toxic_blade and spell_targets.shuriken_storm<5" );
+            if A.Shiv:IsReady(unitID) 
+            and
+            (
+            not A.Nightstalker:IsTalentLearned() 
+            and A.TinyToxicBlade:HasLegendaryCraftingPower()
+            and MultiUnits:GetByRange(10) < 5
+            ) then
+                return A.Shiv:Show(icon)
+            end
+            --build->add_action( this, "Shuriken Storm", "if=spell_targets>=2 and ( not covenant.necrolord or cooldown.serrated_bone_spike.max_charges-charges_fractional>=0.25 or spell_targets.shuriken_storm>4)" );
+            if A.ShurikenStorm:IsReady(unitID) 
+            and MultiUnits:GetByRange(10) >= 2 
+            and GetToggle(2, "AoE")
+            and 
+            (
+                Player:GetCovenant() ~= 4
+                or A.SerratedBoneSpike:GetSpellChargesMax()-A.SerratedBoneSpike:GetSpellChargesFrac() >= 0.25 
+                or MultiUnits:GetByRange(10) > 4
+            ) then
+                return A.ShurikenStorm:Show(icon)
+            end
+            --build->add_action( "serrated_bone_spike,if=cooldown.serrated_bone_spike.max_charges-charges_fractional<=0.25 or soulbind.lead_by_example.enabled and  not buff.lead_by_example.up or soulbind.kevins_oozeling.enabled and  not debuff.kevins_wrath.up" );
+            if A.SerratedBoneSpike:IsReady(unitID) and 
+            (
+                A.SerratedBoneSpike:GetSpellChargesMax()-A.SerratedBoneSpike:GetSpellChargesFrac() <= 0.25 
+            --TODO: or soulbind.lead_by_example.enabled and not buff.lead_by_example.up 
+            --TODO: or soulbind.kevins_oozeling.enabled and not debuff.kevins_wrath.up
+            ) then
+                return A.SerratedBoneSpike:Show(icon) 
+            end
+
+            --build->add_talent( this, "Gloomblade" );
+            if A.Gloomblade:IsReady(unitID)
+            and inMelee
+            then
+                return A.Gloomblade:Show(icon)
+            end
+            --build->add_action( this, "Backstab" );
+            if A.Backstab:IsReady(unitID)
+            and inMelee
+            then
+                return A.Backstab:Show(icon)
+            end
+            --TODO check this first if there are bugs
+            --In combat ranged GCD filler
+            if A.ShurikenToss:IsReady(unitID) and Player:Energy() >=90 and Unit(unitID):HealthPercent() < 100 and not inMelee then
+                return A.ShurikenToss:Show(icon)
+            end
+
+        end
 -----------------------------------------------
 --Functional Main Rotation Calls             --
 -----------------------------------------------
