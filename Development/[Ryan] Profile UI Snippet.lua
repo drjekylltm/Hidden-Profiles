@@ -171,7 +171,7 @@ local SliderMarginOptions = { margin = { top = 10 } }
 local LayoutConfigOptions = { gutter = 6, padding = { left = 5, right = 5 } }
 A.Data.ProfileEnabled[A.CurrentProfile]             = true
 A.Data.ProfileUI                                     = {
-    DateTime = "v11.2 (17.7.2021) #I Know CC's",
+    DateTime = "v12.2 (8.8.2021) #Lost",
     [2] = {
         [ACTION_CONST_ROGUE_SUBTLETY] = {
             LayoutOptions = LayoutConfigOptions,
@@ -251,7 +251,7 @@ A.Data.ProfileUI                                     = {
                         ANY = "Use Priority Rotation",
                     },
                     TT = {
-                        ANY = "Use Priority Rotation\n\nRight click: Create macro",
+                        ANY = "Use AoE Builders and Single Target Finishers\n\nRight click: Create macro",
                     },
                     M                 = {},
                 },
@@ -408,29 +408,12 @@ A.Data.ProfileUI                                     = {
                 {
                     E = "Dropdown",
                     OT = {
-                        { text = "Manual Open", value = "OFF" },
-                        { text = A.GetSpellInfo(703), value = "Garrote" },
-                        { text = A.GetSpellInfo(1833), value = "CheapShot" },
-                    },
-                    DB = "Opener",
-                    DBV = "Garrote",
-                    L = {
-                        ANY = "Opener",
-                    },
-                    TT = {
-                        ANY = "Select the opener to break stealth\nManual open will not break stealth\n\nRight click: Create macro",
-                    },
-                    M = {},
-                },
-                {
-                    E = "Dropdown",
-                    OT = {
                         { text = "Auto", value = 2 },
                         { text = "Manual", value = 1 },
                         { text = "Off", value = 0 },
                     },
                     DB = "VanishSetting",
-                    DBV = 0,
+                    DBV = 2,
                     L = {
                         ANY = "Vanish Usage",
                     },
@@ -467,6 +450,18 @@ A.Data.ProfileUI                                     = {
                     },
                     TT = {
                         ANY = "Use Ryan's Interrupt List\n Otherwise Use Default Action Settings\n\nRight click: Create macro",
+                    },
+                    M                 = {},
+                },
+                {
+                    E               = "Checkbox",
+                    DB              = "usePriorityRotation",
+                    DBV             = false,
+                    L = {
+                        ANY = "Use Priority Rotation",
+                    },
+                    TT = {
+                        ANY = "Use AoE Builders and Single Target Finishers\n\nRight click: Create macro",
                     },
                     M                 = {},
                 },

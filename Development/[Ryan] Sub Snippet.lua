@@ -36,6 +36,7 @@ local ACTION_CONST_ROGUE_SUBTLETY = CONST.ROGUE_SUBTLETY
 local ACTION_CONST_AUTOTARGET = CONST.AUTOTARGET
 local ACTION_CONST_SPELLID_FREEZING_TRAP = CONST.SPELLID_FREEZING_TRAP
 local IsIndoors, UnitIsUnit = _G.IsIndoors, _G.UnitIsUnit
+local interrupt = Action.StdUi.Factory[4]["RyanInterrupts"][_G.GetLocale()]
 
 Action[ACTION_CONST_ROGUE_SUBTLETY] = {
     -- Racial
@@ -93,6 +94,8 @@ Action[ACTION_CONST_ROGUE_SUBTLETY] = {
     KidneyShot = Create({ Type = "Spell", ID = 408}),	
     Evasion = Create({ Type = "Spell", ID = 5277}), 
     CloakofShadows = Create({ Type = "Spell", ID = 31224}), 	
+    Distract = Create({ Type = "Spell", ID = 1725}),
+    PickPocket = Create({ Type = "Spell", ID = 921}),
     -- CDS
 	ShadowBlades = Create({ Type = "Spell", ID = 121471}), 
     --Covenants
@@ -198,6 +201,32 @@ local Temp = {
         end 
     end 
 end 
+
+local DefensiveCasts = { --This table is used to identify Target casts should be feinted in the last 4 seconds. 
+    [328177] = A.Feint, --Fungistorm, PF, Trash
+    [330423] = A.Feint, --Fungistorm, PF, Trash
+    [328176] = A.Feint, --Fungistorm, PF, Trash
+    [330422] = A.Feint, --Fungistorm, PF, Trash
+    [340481] = A.Feint, --Fungistorm, PF, Trash
+    [340633] = A.Feint, --Fungistorm, PF, Trash
+    [325360] = A.Feint, --Rite of Supremacy, SD, Third Boss
+    [342135] = A.Feint, --Interrupting Roar, Top, Trash
+    [325877] = A.Feint, --Ember Blast, CN, Shade of Kael'thas
+    [326409] = A.Feint, --Thrash, HoA
+    [330716] = A.Feint, --Soulstorm, Top
+    [324909] = A.Feint, --Furious Thrashing, Mists
+    [322554] = A.Feint, --Castigate, SD
+    [319685] = A.Feint, --Severing Smash, SD
+    [334625] = A.Feint, --Abyssal Detonation, SOA
+    [322895] = A.Feint, --Gloom Squall, SD
+    [324527] = A.Feint, --Plaguestomp, PF
+    [323195] = A.Feint, --Purifying Blast, SOA
+    [333827] = A.Feint, --Seismic Stomp, ToP
+    [322232] = A.Feint, --Infectious Rain, PF
+    [322486] = A.CloakofShadows, --Overgrowth, Mists
+}
+
+
 ------------------------------------------------------------
 --Ryan Generic Functions
 ------------------------------------------------------------
@@ -270,14 +299,12 @@ if A.ShadowGraspTotem:IsReady(unitID) and Unit(unitID):TimeToDie() > 12 then
 end
 end
 local function EchoingBuffMatch()
-
     local EchoingBuffs = {
     [2] = Unit(player):HasBuffs(323558,_,true) > 0,
     [3] = Unit(player):HasBuffs(323559,_,true) > 0,
     [4] = Unit(player):HasBuffs(323560,_,true) > 0,
     [5] = Unit(player):HasBuffs(354838,_,true) > 0,
     }
-    
     if EchoingBuffs[Player:ComboPoints()]
         then 
             return true end
@@ -316,7 +343,6 @@ A[1] = function(icon)
             if useCC and A.KidneyShot:IsReady("target") and A.KidneyShot:AbsentImun("target", Temp.TotalAndPhysAndCC) and Player:ComboPoints() >= 1 and Unit("target"):GetDR("stun") > 0 and not Unit("target"):IsBoss() then 
                 return A.KidneyShotGreen:Show(icon) 
             end 
-            
             if useCC and A.Blind:IsReady("target") and A.Blind:AbsentImun("target", Temp.TotalAndPhysAndCC) and Unit("target"):GetDR("disorient") > 0 and not Unit("target"):IsBoss() then 
                 return A.BlindGreen:Show(icon)
             end 
@@ -353,7 +379,6 @@ A[3] = function(icon)
     local effective_combo_points = ((EchoingBuffMatch() and 7) or Player:ComboPoints())
     --def->add_action( "variable,name=snd_condition,value=buff.slice_and_dice.up or spell_targets.shuriken_storm>=6", "Used to determine whether cooldowns wait for SnD based on targets." );
     local snd_condition = Unit(player):HasBuffs(A.SliceAndDice.ID) ~= 0 or MultiUnits:GetByRange(10) >=6  
-
     -- if in Necrotic Wake instance and targetting Companion, stop rotation to allow for covenant Buff cast to finish (stealth breaks cast)
     if A.InstanceInfo.ID == 2286 and Unit("target"):Name() == "Farra" then return end
     -- Stop rotation on Torghast Containers
@@ -373,7 +398,7 @@ A[3] = function(icon)
         if UnitCanAttack(player, unitID) == false then return end --Stop Rotation if Target can not attack back (yellow enemies)
         --if Unit(player):HasBuffs(A.Vanish.ID) ~= 0 and GetToggle(2, "VanishSetting") == 0 then return end  --Stop Rotation if Vanish is set to off
         if IsMounted() then return end  --Stop Rotation if Mounted. Action has check for this but can lag after stealthing
-        local isBurst = BurstIsON(unitID) -- @boolean
+        local isBurst = BurstIsON(unitID) and npc_id ~= 174773-- @boolean ignore Spitefuls in M+
         local inMelee = A.Kick:IsInRange(unitID) -- @boolean
         local inCombat = Unit(player):CombatTime() > 0
         local _, _, _, _, _, npc_id 		= Unit("target"):InfoGUID() --@number npcID from wowhead/evlui, better than using strings for other languages
@@ -383,6 +408,10 @@ A[3] = function(icon)
 
         --Stealth with target enemy
         if IsUnitEnemy(unitID) and A.Stealth:IsReady(unitID, true) and Player:GetStance() == 0 and not IsMounted() then --and Unit(player):HasBuffs(A.Soulshape.ID) == 0 apparently the wow API is shit and soulshape is also getstance == 2
+            return A.Stealth:Show(icon)
+        end
+        --Stealth after Shadowmeld
+        if Unit(player):HasBuffs(A.Shadowmeld.ID) ~= 0 then
             return A.Stealth:Show(icon)
         end
         --Shiv Enrages
@@ -414,6 +443,8 @@ A[3] = function(icon)
                 return A.Blind:Show(icon) 
             else return true end
         end 
+        --Torghast Vendors Stop Rotation (sometimes they are yellow)
+        if npc_id == 152594 or npc_id == 170257 then return end
         --Spiteful Shade
         if npc_id == 174773 and Unit(unitID):HasDeBuffs({"Stuned", "Disoriented", "PhysStuned"}) == 0 then
             --Evasion tank
@@ -435,6 +466,21 @@ A[3] = function(icon)
                 end
             else return true end
         end 
+        -- Xira the Underhanded -- TOP
+        if npc_id == 164464 then 
+            if A.Blind:IsReady(unitID) then 
+                return A.Blind:Show(icon) 
+            elseif A.QuakingPalm:IsReady(unitID) then
+                return A.QuakingPalm:Show(icon)
+            elseif A.KidneyShot:IsReady(unitID) then
+                return A.KidneyShot:Show(icon)
+            end
+    end 
+
+
+
+
+
 ------------------------------
 --END Target Specific Logic --
 ------------------------------
@@ -494,12 +540,12 @@ A[3] = function(icon)
             end
             local function QuakingPalmAble(unit)
                 if  A.QuakingPalm:IsReady(unit) and A.QuakingPalm:AbsentImun(unit, Temp.TotalAndPhysAndCC) and Unit(unit):GetDR("incapacitate") > 0 and not Unit(unit):IsBoss() then
-                    return A.QuakingPalm:Show(icon)
+                    return true
                 end
             end
             local function BlindAble(unit)
                 if A.Blind:IsReady(unit) and A.Blind:AbsentImun(unit, Temp.TotalAndPhysAndCC) and Unit(unit):GetDR("disorient") > 0 and not Unit(unit):IsBoss() then
-                    return A.Blind:Show(icon)
+                    return true
                 end
             end
             --All kick/cc macros require mouseover checks, so our logic mustmatch here to prevent missing due to mouse location
@@ -510,42 +556,63 @@ A[3] = function(icon)
             end
             --uses ryan interrupt table in SL dungeons and raid instance IDs
             if A.GetToggle(2, "InterruptList") and inInstance then
-                useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(unitIDinterrupt, "RyanInterrupts", true)
+                useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(unitIDinterrupt, "RyanInterrupts", true, true)
             else
                 useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(unitIDinterrupt)
             end
-            --Check if target is known to not be CCable
-            if (useCC or useRacial) and IsNotCCAble[npc_id] then
-                useCC = false
-                useRacial = false
-            end
-            --Check if the cast is a channel and we should wait for the channel to interrupt
             local _, _, SpellID, _ ,_ , IsChanneling = Unit(unitIDinterrupt):IsCastingRemains()
-            if Channels[SpellID] and not IsChanneling then
-                useKick = false
-                useCC = false
-                useRacial = false
-            end
-            --Interrupt as appropriate based on interrupt table and CC knowledge   
-            if useKick or useCC or useRacial then
-                -- useKick
-                if useKick and castLeft > A.GetPing() and not notKickAble  and KickAble(unitIDinterrupt) then
-                    return A.Kick:Show(icon)
+            --if casting anything start interrupt logic
+            if SpellID ~= nil 
+            then
+                --Check ryan interrupt table if this cast should be stopped instantly and ignore interval checks, update uses if so
+                if interrupt[SpellID] ~= nil and interrupt[SpellID].ignoreInterval == true
+                then
+                    useKick = interrupt[SpellID].useKick
+                    useCC = interrupt[SpellID].useCC
+                    useRacial = interrupt[SpellID].useRacial
                 end
-                -- useCC / useRacial
-                if (not useKick or notKickAble or A.Kick:GetCooldown() > castLeft + A.GetPing()) and Unit(unitIDinterrupt):HasBuffs(A.Inspired.ID) == 0 then
-                    if useCC and CheapShotAble(unitIDinterrupt) then
-                        return A.CheapShot:Show(icon)
+                --Check if target is known to not be CCable
+                if (useCC or useRacial) and IsNotCCAble[npc_id] then
+                    useCC = false
+                    useRacial = false
+                end
+                --Check if the cast is a channel and we should wait for the channel to interrupt
+                if Channels[SpellID] and not IsChanneling then
+                    useKick = false
+                    useCC = false
+                    useRacial = false
+                end
+                --Interrupt as appropriate based on interrupt table and CC knowledge   
+                if useKick or useCC or useRacial then
+                    -- useKick
+                    if useKick and castLeft > A.GetPing() and not notKickAble  and KickAble(unitIDinterrupt) then
+                        return A.Kick:Show(icon)
                     end
-                    if useCC and KidneyShotAble(unitIDinterrupt) then
-                        return A.KidneyShot:Show(icon)
+                    -- useCC / useRacial
+                    if (not useKick or notKickAble or A.Kick:GetCooldown() > castLeft + A.GetPing()) and Unit(unitIDinterrupt):HasBuffs(A.Inspired.ID) == 0 then
+                        if useCC and CheapShotAble(unitIDinterrupt) then
+                            return A.CheapShot:Show(icon)
+                        end
+                        if useCC and KidneyShotAble(unitIDinterrupt) then
+                            return A.KidneyShot:Show(icon)
+                        end
+                        if useRacial and QuakingPalmAble(unitIDinterrupt) then
+                            return A.QuakingPalm:Show(icon)
+                        end
+                        if useCC and BlindAble(unitIDinterrupt) then
+                            return A.Blind:Show(icon)
+                        end
                     end
-                    if useRacial and QuakingPalmAble(unitIDinterrupt) then
-                        return A.QuakingPalm:Show(icon)
-                    end
-                    if useCC and BlindAble(unitIDinterrupt) then
-                        return A.Blind:Show(icon)
-                    end
+                end
+                --check if this is the last GCD we will get and we excpect a GCD interupt before cast done, hold GCD if so
+                if 
+                interrupt[SpellID] ~= nil and              
+                (interrupt[SpellID].useCC == true or 
+                interrupt[SpellID].useRacial == true)
+                and inMelee
+                and castLeft < (GetGCD() + GetCurrentGCD() + A.GetPing())
+                then
+                    return A.PoolResource:Show(icon)
                 end
             end
             --Auto Targeting Interrupts
@@ -562,6 +629,14 @@ A[3] = function(icon)
                     else
                         useKick, useCC, useRacial, notKickAble, castLeft = InterruptIsValid(val)
                     end
+                    local _, _, SpellID, _ ,_ , IsChanneling = Unit(val):IsCastingRemains()
+                    --Check ryan interrupt table if this cast should be stopped instantly and ignore interval checks, update uses if so
+                    if SpellID ~= nil and interrupt[SpellID] ~= nil and  interrupt[SpellID].ignoreInterval == true
+                    then
+                        useKick = interrupt[SpellID].useKick
+                        useCC = interrupt[SpellID].useCC
+                        useRacial = interrupt[SpellID].useRacial
+                    end
                     if useKick or useCC or useRacial then
                         --Check if the nameplate can even be CC'd, if not, correct useCC and useRacial
                         local _, _, _, _, _, npc_id_val 		= Unit(val):InfoGUID()
@@ -570,7 +645,6 @@ A[3] = function(icon)
                             useRacial = false
                         end
                         --Check for spells that we want to stop the channel not the cast
-                        local _, _, SpellID, _ ,_ , IsChanneling = Unit(val):IsCastingRemains()
                         if Channels[SpellID] and not IsChanneling then
                             useKick = false
                             useCC = false
@@ -783,7 +857,7 @@ A[3] = function(icon)
                                 or Unit(val):TimeToDie() <= 5 and MultiUnits:GetByRange(10) < 3
                             )
                                 -- end of APL checks, start of action checks
-                            and ValidAutotarget(val)
+                            and not KeepTarget[select(6, Unit(val):InfoGUID())]
                             and ((UnitCanAttack("player", val) and Unit(val):GetRange() <=15  and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) --We have threat or it is a dummy        
                             then
                                 return A:Show(icon, ACTION_CONST_AUTOTARGET)
@@ -951,37 +1025,38 @@ A[3] = function(icon)
                 return A.ShadowDance:Show(icon)
             end
         end
+
         local function Opener()
-    local ignoretimers = (BossMods:HasAnyAddon()~=true) or (BossMods:HasAnyAddon()==true and not GetToggle(1, "BossMods")) -- logic for bossmods toggle returns true if no boss mods installed, need extra hasanyaddon check
-    if A.MarkedForDeath:IsReady(unitID) and not Unit(unitID):IsTotem() and Player:ComboPointsDeficit() >=4 + boolnumber(A.DeeperStratagem:IsTalentLearned())
-    and ((ignoretimers and TimeOnTarget() <= 2.5) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 7*GetGCD()))
-    then
-        return A.MarkedForDeath:Show(icon)
-    end
+        local ignoretimers = (BossMods:HasAnyAddon()~=true) or (BossMods:HasAnyAddon()==true and not GetToggle(1, "BossMods")) -- logic for bossmods toggle returns true if no boss mods installed, need extra hasanyaddon check
+        if A.MarkedForDeath:IsReady(unitID) and not Unit(unitID):IsTotem() and Player:ComboPointsDeficit() >=4 + boolnumber(A.DeeperStratagem:IsTalentLearned())
+        and ((ignoretimers and TimeOnTarget() <= 2.5) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 7*GetGCD()))
+        then
+            return A.MarkedForDeath:Show(icon)
+        end
 
-    if A.SliceAndDice:IsReady(unitID, true) and Unit(player):HasBuffs(A.SliceAndDice.ID) <= 9 and Player:ComboPoints() >= 5
-    and ((ignoretimers and TimeOnTarget() <= 2) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 1.1))
-    then
-        return A.SliceAndDice:Show(icon)
-    end
+        if A.SliceAndDice:IsReady(unitID, true) and Unit(player):HasBuffs(A.SliceAndDice.ID) <= 9 and Player:ComboPoints() >= 5
+        and ((ignoretimers and TimeOnTarget() <= 2) or (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 1.1))
+        then
+            return A.SliceAndDice:Show(icon)
+        end
 
-    if A.ShadowBlades:IsReady(unitID) 
-    and inMelee
-    and isBurst 
-    and A.MarkoftheMasterAssassin:HasLegendaryCraftingPower() 
-    and (ignoretimers or inCombat or BossMods:IsEngage())
-    --and GCDPercentage >= 40
-    then
-        return A.ShadowBlades:Show(icon)
-    end
+        if A.ShadowBlades:IsReady(unitID) 
+        and inMelee
+        and isBurst 
+        and A.MarkoftheMasterAssassin:HasLegendaryCraftingPower() 
+        and (ignoretimers or inCombat or BossMods:IsEngage())
+        --and GCDPercentage >= 40
+        then
+            return A.ShadowBlades:Show(icon)
+        end
 
-    -- Tricks with boss mods
-    if A.TricksOfTheTrade:IsReady("focus") and (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 2.5) then
-        return A.TricksOfTheTrade:Show(icon)
-    end
-    if A.ShroudOfConcealment:IsReady(player) and IsInRaid() and (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 6) then
-        return A.ShroudOfConcealment:Show(icon)
-    end
+        -- Tricks with boss mods
+        if A.TricksOfTheTrade:IsReady("focus") and (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 2.5) then
+            return A.TricksOfTheTrade:Show(icon)
+        end
+        if A.ShroudOfConcealment:IsReady(player) and IsInRaid() and (BossMods:GetPullTimer() > .1 and BossMods:GetPullTimer() <= 6) then
+            return A.ShroudOfConcealment:Show(icon)
+        end
         end
         local function Finishers()
         --finish->add_action( "variable,name=premed_snd_condition,value=talent.premeditation.enabled and spell_targets.shuriken_storm<(5-covenant.necrolord) and  not covenant.kyrian", "While using Premeditation, avoid casting Slice and Dice when Shadow Dance is soon to be used, except for Kyrian" )
@@ -1052,7 +1127,7 @@ A[3] = function(icon)
                 if 	Unit(val):PT(A.Rupture.ID, true) --Checks Pandemic Threshold based on DOT duration
                     and Unit(val):TimeToDie() > (5+(2*Player:ComboPoints())) -- nameplate will live long enough
                     and A.Kick:IsInRange(val) -- in range
-                    and ValidAutotarget(val) --Valid for auto targeting
+                    and not KeepTarget[select(6, Unit(val):InfoGUID())]
                     and	(( UnitCanAttack("player", val) and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) --in combat with nameplate or comabt dummy 
                     then
                         return A:Show(icon, ACTION_CONST_AUTOTARGET)
@@ -1063,7 +1138,7 @@ A[3] = function(icon)
         if A.Rupture:IsReady(unitID) and
         (
         not skip_rupture 
-        and Unit(unitID):HasDeBuffs(A.Rupture.ID, true) < A.SymbolsOfDeath:GetCooldown() +10 
+        and Unit(unitID):HasDeBuffs(A.Rupture.ID, true) < A.SymbolsOfDeath:GetCooldown() + 10 
         and A.SymbolsOfDeath:GetCooldown() <= 5 
         and Unit(unitID):TimeToDie() - Unit(unitID):HasDeBuffs(A.Rupture.ID, true) > A.SymbolsOfDeath:GetCooldown() + 5
         ) then
@@ -1154,7 +1229,7 @@ A[3] = function(icon)
                     if 	(Unit(val):HasDeBuffs(A.FindWeakness.ID, true) <= 1 --Checck FindWeakenss
                         and Unit(val):TimeToDie() - Unit(val):HasDeBuffs(A.FindWeakness.ID, true) > 6-- nameplate will live long enough
                         and A.Kick:IsInRange(val)) -- in range
-                        and ValidAutotarget(val) --Valid for auto targeting
+                        and not KeepTarget[select(6, Unit(val):InfoGUID())]
                         and	(( UnitCanAttack("player", val) and UnitThreatSituation("player", val) ~= nil) or Unit(val):IsDummy()) --in combat with nameplate or comabt dummy 
                         then
                             return A:Show(icon, ACTION_CONST_AUTOTARGET)
@@ -1288,7 +1363,7 @@ A[3] = function(icon)
         --DEFENSIVES
         if Defensives() then return true end
         -- OPENER
-        if Unit(player):HasBuffs(A.Stealth.ID) ~= 0 and GetToggle(2, "Opener") ~= "OFF" and Opener() then return true end
+        if Opener() then return true end
 
 
             --def->add_action( "call_action_list,name=cds", "Check CDs at first" );
